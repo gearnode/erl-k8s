@@ -9,6 +9,7 @@
     et,
     uri,
     mhttp,
-    json]},
+    json,
+    jsv]},
   {env, []},
   {modules, []}]}.

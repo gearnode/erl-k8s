@@ -6,6 +6,10 @@
   {git,"https://github.com/galdor/erl-json.git",
        {ref,"2f3a88b8650b4660bf48750cc16462a8103f21a8"}},
   0},
+ {<<"jsv">>,
+  {git,"https://github.com/galdor/erl-jsv.git",
+       {ref,"ca1783a75c694dc3ac9dd978098186e3e41d8a81"}},
+  0},
  {<<"ksuid">>,
   {git,"https://github.com/exograd/erl-ksuid.git",
        {ref,"26690a3ba91f83e0f0ec5bcf547ca4ac50a8fb5d"}},
@@ -17,4 +21,8 @@
  {<<"uri">>,
   {git,"https://github.com/galdor/erl-uri.git",
        {ref,"00b8f36ec63a49b89ca0b202bbf70f364208e8d6"}},
-  0}].
+  0},
+ {<<"uuid">>,
+  {git,"https://github.com/galdor/erl-uuid.git",
+       {ref,"a3e876ed2fe46d04891574caf18bc49350b1a578"}},
+  1}].
