@@ -42,4 +42,5 @@ unregister_jsv_catalogs() ->
 
 -spec catalogs() -> [{jsv:catalog_name(), jsv:catalog()}].
 catalogs() ->
-  [{k8sc_config, k8sc_config:jsv_catalog()}].
+  [{k8sc, k8sc_jsv:catalog()},
+   {k8sc_config, k8sc_config:jsv_catalog()}].
