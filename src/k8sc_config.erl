@@ -60,7 +60,7 @@ load(ConfigPath) ->
               "--raw", "-o", "json"],
       try
         Data = exec_program(KubectlPath, Args),
-        read(Data)
+        {ok, read(Data)}
       catch
         throw:{error, Reason} ->
           {error, Reason}
