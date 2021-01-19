@@ -64,7 +64,7 @@ client_options(_Config, Cluster, User) ->
                 (client_certificate_data, Value, Acc) ->
                   [{cert, read_certificates(Value)} | Acc];
                 (client_key_data, Value, Acc) ->
-                  [{key, read_private_keys(Value)} | Acc];
+                  [{key, read_private_key(Value)} | Acc];
                 (_, _, Acc) ->
                   Acc
              end, ConnectOptions1, User),
@@ -90,8 +90,8 @@ read_certificates(Base64Data) ->
       Certs
   end.
 
--spec read_private_keys(binary()) -> [ssl:key()].
-read_private_keys(Base64Data) ->
+-spec read_private_key(binary()) -> ssl:key().
+read_private_key(Base64Data) ->
   PEMData = decode_base64(Base64Data),
   case
     lists:filtermap(fun
@@ -106,8 +106,10 @@ read_private_keys(Base64Data) ->
   of
     [] ->
       throw({error, {no_private_key_found}});
-    Keys ->
-      Keys
+    [Key] ->
+      Key;
+    _ ->
+      throw({error, {multiple_private_keys_found}})
   end.
 
 -spec decode_base64(binary()) -> binary().
