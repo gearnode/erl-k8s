@@ -1,6 +1,34 @@
 -module(k8sc_http).
 
--export([pool_options/1, pool_options/2]).
+-export([pool_ids/1, pools/1, pool_options/1, pool_options/2]).
+
+-spec pool_ids(k8sc_config:config()) -> [mhttp:pool_id()].
+pool_ids(#{contexts := Contexts}) ->
+  maps:fold(fun (Name, _, Acc) ->
+                [pool_id(Name) | Acc]
+            end, [], Contexts).
+
+-spec pools(k8sc_config:config()) ->
+        {ok, [{mhttp:pool_id(), mhttp_pool:options()}]} | {error, term()}.
+pools(Config = #{contexts := Contexts}) ->
+  try
+    Pools = maps:fold(fun (Name, _, Acc) ->
+                          case pool_options(Config, Name) of
+                            {ok, Options} ->
+                              [{pool_id(Name), Options} | Acc];
+                            {error, Reason} ->
+                              throw({error, {invalid_context, Reason, Name}})
+                          end
+                      end, [], Contexts),
+    {ok, Pools}
+  catch
+    throw:{error, Reason} ->
+      {error, Reason}
+  end.
+
+-spec pool_id(k8sc_config:context_name()) -> mhttp:pool_id().
+pool_id(Name) ->
+  binary_to_atom(<<"k8sc_", Name/binary>>).
 
 -spec pool_options(k8sc_config:config()) ->
         {ok, mhttp_pool:options()} | {error, term()}.
@@ -11,28 +39,25 @@ pool_options(_) ->
 
 -spec pool_options(k8sc_config:config(), k8sc_config:context_name()) ->
         {ok, mhttp_pool:options()} | {error, term()}.
-pool_options(Config = #{contexts := Contexts,
-                        clusters := Clusters,
-                        users := Users},
-             ContextName) ->
-  try
-    case maps:find(ContextName, Contexts) of
-      {ok, #{cluster := ClusterName, user := UserName}} ->
-        Cluster = case maps:find(ClusterName, Clusters) of
+pool_options(Config, ContextName) ->
+  case k8sc_config:context(ContextName, Config) of
+    {ok, #{cluster := ClusterName, user := UserName}} ->
+      try
+        Cluster = case k8sc_config:cluster(ClusterName, Config) of
                     {ok, C} -> C;
                     error -> throw({error, {unknown_cluster, ClusterName}})
                   end,
-        User = case maps:find(UserName, Users) of
+        User = case k8sc_config:user(UserName, Config) of
                  {ok, U} -> U;
                  error -> throw({error, {unknown_user, UserName}})
                end,
-        {ok, pool_options(Config, Cluster, User)};
-      error ->
-        throw({error, {unknown_context, ContextName}})
-    end
-  catch
-    throw:{error, Reason} ->
-      error(Reason)
+        {ok, pool_options(Config, Cluster, User)}
+      catch
+        throw:{error, Reason} ->
+          {error, Reason}
+      end;
+    error ->
+      {error, unknown_context}
   end.
 
 -spec pool_options(k8sc_config:config(), k8sc_config:cluster(),

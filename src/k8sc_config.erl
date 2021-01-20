@@ -1,6 +1,7 @@
 -module(k8sc_config).
 
--export([default_path/0, load/0, load/1, jsv_catalog/0]).
+-export([cluster/2, user/2, context/2,
+         default_path/0, load/0, load/1, jsv_catalog/0]).
 
 -export_type([config/0,
               cluster_name/0, cluster/0,
@@ -35,6 +36,18 @@
         #{cluster := cluster_name(),
           user := user_name(),
           namespace => binary()}.
+
+-spec cluster(cluster_name(), config()) -> {ok, cluster()} | error.
+cluster(Name, #{clusters := Clusters}) ->
+  maps:find(Name, Clusters).
+
+-spec user(user_name(), config()) -> {ok, user()} | error.
+user(Name, #{users := Users}) ->
+  maps:find(Name, Users).
+
+-spec context(context_name(), config()) -> {ok, context()} | error.
+context(Name, #{contexts := Contexts}) ->
+  maps:find(Name, Contexts).
 
 -spec default_path() -> file:name().
 default_path() ->

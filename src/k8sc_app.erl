@@ -8,7 +8,8 @@ start(_StartType, _Args) ->
   try
     register_jsv_catalogs(),
     Config = load_config(),
-    start_mhttp_pool(Config),
+    persistent_term:put(k8sc_config, Config),
+    start_mhttp_pools(Config),
     k8sc_sup:start_link()
   catch
     throw:{error, Reason} ->
@@ -16,7 +17,8 @@ start(_StartType, _Args) ->
   end.
 
 stop(_State) ->
-  stop_mhttp_pool(),
+  Config = persistent_term:get(k8sc_config),
+  stop_mhttp_pools(Config),
   unregister_jsv_catalogs(),
   ok.
 
@@ -57,20 +59,27 @@ catalogs() ->
   [{k8sc, k8sc_jsv:catalog()},
    {k8sc_config, k8sc_config:jsv_catalog()}].
 
--spec start_mhttp_pool(k8sc_config:config()) -> ok.
-start_mhttp_pool(Config) ->
-  case k8sc_http:pool_options(Config) of
-    {ok, PoolOptions} ->
-      case mhttp_pool_sup:start_pool(k8sc, PoolOptions) of
-        {ok, _} ->
-          ok;
-        {error, Reason} ->
-          throw({error, {start_mhttp_pool, Reason}})
-      end;
+-spec start_mhttp_pools(k8sc_config:config()) -> ok.
+start_mhttp_pools(Config) ->
+  case k8sc_http:pools(Config) of
+    {ok, Pools} ->
+      lists:foreach(fun ({Id, Options}) ->
+                        start_mhttp_pool(Id, Options)
+                    end, Pools);
     {error, Reason} ->
       throw({error, {invalid_configuration, Reason}})
   end.
 
--spec stop_mhttp_pool() -> ok.
-stop_mhttp_pool() ->
-  mhttp_pool:stop(k8sc).
+-spec start_mhttp_pool(mhttp:pool_id(), mhttp_pool:options()) -> ok.
+start_mhttp_pool(Id, Options) ->
+  case mhttp_pool_sup:start_pool(Id, Options) of
+    {ok, _} ->
+      ok;
+    {error, Reason} ->
+      throw({error, {mhttp_pool, Reason, Id}})
+  end.
+
+-spec stop_mhttp_pools(k8sc_config:config()) -> ok.
+stop_mhttp_pools(Config) ->
+  Ids = k8sc_http:pool_ids(Config),
+  lists:foreach(fun mhttp_pool:stop/1, Ids).
