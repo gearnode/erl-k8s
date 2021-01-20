@@ -1,6 +1,6 @@
 -module(k8sc_config).
 
--export([cluster/2, user/2, context/2, default_context_name/1,
+-export([cluster/2, cluster_uri/1, user/2, context/2, default_context/1,
          default_path/0, load/0, load/1, jsv_catalog/0]).
 
 -export_type([config/0,
@@ -20,7 +20,8 @@
 
 -type cluster_name() :: binary().
 -type cluster() ::
-        #{server := binary(),
+        #{name := cluster_name(),
+          server := binary(),
           tls_server_name => binary(),
           insecure_skip_tls_verify => boolean(),
           certificate_authority_data => binary(),
@@ -28,18 +29,25 @@
 
 -type user_name() :: binary().
 -type user() ::
-        #{client_certificate_data => binary(),
+        #{name := user_name(),
+          client_certificate_data => binary(),
           client_key_data => binary()}.
 
 -type context_name() :: binary().
 -type context() ::
-        #{cluster := cluster_name(),
+        #{name := context_name(),
+          cluster := cluster_name(),
           user := user_name(),
           namespace => binary()}.
 
 -spec cluster(cluster_name(), config()) -> {ok, cluster()} | error.
 cluster(Name, #{clusters := Clusters}) ->
   maps:find(Name, Clusters).
+
+-spec cluster_uri(cluster()) -> uri:uri().
+cluster_uri(#{server := URIString}) ->
+  {ok, URI} = uri:parse(URIString),
+  URI.
 
 -spec user(user_name(), config()) -> {ok, user()} | error.
 user(Name, #{users := Users}) ->
@@ -49,14 +57,13 @@ user(Name, #{users := Users}) ->
 context(Name, #{contexts := Contexts}) ->
   maps:find(Name, Contexts).
 
--spec default_context_name(config()) -> {ok, context_name()} | error.
-default_context_name(#{current_context := Name}) ->
-  {ok, Name};
-default_context_name(#{contexts := Contexts}) when map_size(Contexts) > 0 ->
-  {Name, _, _} = maps:next(maps:iterator(Contexts)),
-  {ok, Name};
-default_context_name(_Config) ->
-  error.
+-spec default_context(config()) -> context().
+default_context(Config = #{current_context := Name}) ->
+  {ok, Context} = context(Name, Config),
+  Context;
+default_context(#{contexts := Contexts}) when map_size(Contexts) > 0 ->
+  {_, Context, _} = maps:next(maps:iterator(Contexts)),
+  Context.
 
 -spec default_path() -> file:name().
 default_path() ->
@@ -119,7 +126,7 @@ read_value(Value) ->
 -spec extract_named_items(json:array(), ItemName :: atom()) -> map().
 extract_named_items(ItemData, ItemName) ->
   lists:foldl(fun (#{name := Name, ItemName := ItemValue}, Acc) ->
-                  Acc#{Name => ItemValue}
+                  Acc#{Name => ItemValue#{name => Name}}
               end, #{}, ItemData).
 
 -spec normalize_keys(term()) -> term().

@@ -80,9 +80,9 @@ client_options(_Config, Cluster, User) ->
   ConnectOptions1 =
     maps:fold(fun
                 (tls_server_name, Value, Acc) ->
-                 [{server_name_indication, binary_to_list(Value)} | Acc];
+                  [{server_name_indication, binary_to_list(Value)} | Acc];
                 (insecure_skip_tls_verify, _, Acc) ->
-                 [{verify, verify_none} | lists:keydelete(verify, 1, Acc)];
+                  [{verify, verify_none} | lists:keydelete(verify, 1, Acc)];
                 (certificate_authority_data, Value, Acc) ->
                   [{cacerts, read_certificates(Value)} | Acc];
                 (proxy_url, _, _) ->
@@ -152,16 +152,6 @@ decode_base64(Data) ->
       throw({error, invalid_base64_data})
   end.
 
--spec default_context() -> k8sc_config:context_name().
-default_context() ->
-  Config = persistent_term:get(k8sc_config),
-  case k8sc_config:default_context_name(Config) of
-    {ok, Name} ->
-      Name;
-    error ->
-      error(no_available_context)
-  end.
-
 -spec send_request(mhttp:request()) ->
         {ok, mhttp:response()} | {error, term()}.
 send_request(Request) ->
@@ -170,6 +160,33 @@ send_request(Request) ->
 -spec send_request(mhttp:request(), request_options()) ->
         {ok, mhttp:response()} | {error, term()}.
 send_request(Request, Options) ->
-  ContextName = maps:get(context, Options, default_context()),
-  PoolId = pool_id(ContextName),
-  mhttp:send_request(Request, #{pool => PoolId}).
+  Config = persistent_term:get(k8sc_config),
+  case maps:find(context, Options) of
+    {ok, Name} ->
+      case k8sc_config:context(Name, Config) of
+        {ok, Context} ->
+          send_request(Request, Context, Config, Options);
+        error ->
+          {error, {unknown_context, Name}}
+      end;
+    error ->
+      Context = k8sc_config:default_context(Config),
+      send_request(Request, Context, Config, Options)
+  end.
+
+-spec send_request(mhttp:request(), k8sc_config:context(),
+                   k8sc_config:config(), request_options()) ->
+        {ok, mhttp:response()} | {error, term()}.
+send_request(Request, #{name := ContextName,
+                        cluster := ClusterName},
+             Config, _Options) ->
+  case k8sc_config:cluster(ClusterName, Config) of
+    {ok, Cluster} ->
+      PoolId = pool_id(ContextName),
+      TargetRef = mhttp_request:target_uri(Request),
+      TargetBase = k8sc_config:cluster_uri(Cluster),
+      Target = uri:resolve_reference(TargetRef, TargetBase),
+      mhttp:send_request(Request#{target => Target}, #{pool => PoolId});
+    error ->
+      {error, {unknown_cluster, ClusterName}}
+  end.
