@@ -1,6 +1,12 @@
 -module(k8sc_http).
 
--export([pool_ids/1, pools/1, pool_options/1, pool_options/2]).
+-export([pool_ids/1, pools/1, pool_options/1, pool_options/2,
+         send_request/1, send_request/2]).
+
+-export_type([request_options/0]).
+
+-type request_options() ::
+        #{context => k8sc_config:context_name()}.
 
 -spec pool_ids(k8sc_config:config()) -> [mhttp:pool_id()].
 pool_ids(#{contexts := Contexts}) ->
@@ -145,3 +151,25 @@ decode_base64(Data) ->
     error:_ ->
       throw({error, invalid_base64_data})
   end.
+
+-spec default_context() -> k8sc_config:context_name().
+default_context() ->
+  Config = persistent_term:get(k8sc_config),
+  case k8sc_config:default_context_name(Config) of
+    {ok, Name} ->
+      Name;
+    error ->
+      error(no_available_context)
+  end.
+
+-spec send_request(mhttp:request()) ->
+        {ok, mhttp:response()} | {error, term()}.
+send_request(Request) ->
+  send_request(Request, #{}).
+
+-spec send_request(mhttp:request(), request_options()) ->
+        {ok, mhttp:response()} | {error, term()}.
+send_request(Request, Options) ->
+  ContextName = maps:get(context, Options, default_context()),
+  PoolId = pool_id(ContextName),
+  mhttp:send_request(Request, #{pool => PoolId}).

@@ -1,6 +1,6 @@
 -module(k8sc_config).
 
--export([cluster/2, user/2, context/2,
+-export([cluster/2, user/2, context/2, default_context_name/1,
          default_path/0, load/0, load/1, jsv_catalog/0]).
 
 -export_type([config/0,
@@ -48,6 +48,15 @@ user(Name, #{users := Users}) ->
 -spec context(context_name(), config()) -> {ok, context()} | error.
 context(Name, #{contexts := Contexts}) ->
   maps:find(Name, Contexts).
+
+-spec default_context_name(config()) -> {ok, context_name()} | error.
+default_context_name(#{current_context := Name}) ->
+  {ok, Name};
+default_context_name(#{contexts := Contexts}) when map_size(Contexts) > 0 ->
+  {Name, _, _} = maps:next(maps:iterator(Contexts)),
+  {ok, Name};
+default_context_name(_Config) ->
+  error.
 
 -spec default_path() -> file:name().
 default_path() ->
