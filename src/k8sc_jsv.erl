@@ -4,5 +4,6 @@
 
 -spec catalog() -> jsv:catalog().
 catalog() ->
-  #{metadata => k8sc_metadata:jsv_definition(),
-    namespace => k8sc_namespace:jsv_definition()}.
+  maps:fold(fun (Type, #{module := Module}, Acc) ->
+                Acc#{Type => Module:jsv_definition()}
+            end, #{}, k8sc_resource_registry:resource_definitions()).

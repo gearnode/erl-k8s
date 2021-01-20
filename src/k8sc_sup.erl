@@ -9,7 +9,8 @@ start_link() ->
   supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-  Children = [],
+  Children = [#{id => resource_registry,
+                start => {k8sc_resource_registry, start_link, []}}],
   Flags = #{strategy => one_for_one,
             intensity => 1,
             period => 5},
