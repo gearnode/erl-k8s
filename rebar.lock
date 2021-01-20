@@ -16,7 +16,7 @@
   1},
  {<<"mhttp">>,
   {git,"https://github.com/galdor/erl-mhttp.git",
-       {ref,"c3f1db34eb29a56494fa88ed150edc60578901b2"}},
+       {ref,"e4b14ec17b3b731a62d6d505fee3e9c742458c7e"}},
   0},
  {<<"uri">>,
   {git,"https://github.com/galdor/erl-uri.git",
