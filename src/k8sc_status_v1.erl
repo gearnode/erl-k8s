@@ -7,8 +7,8 @@
 -export_type([status/0]).
 
 -type status() ::
-        #{kind := k8sc_resource:name(),
-          'apiVersion' := binary(),
+        #{kind => k8sc_resource:name(),
+          'apiVersion' => binary(),
           code => integer(),
           details => k8sc_status_details_v1:status_details(),
           message => binary(),
@@ -35,6 +35,4 @@ jsv_definition() ->
          message => string,
          %metadata => {ref, list_meta_v1},
          reason => string,
-         status => string},
-     required =>
-       [kind, 'apiVersion']}}.
+         status => string}}}.

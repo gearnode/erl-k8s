@@ -25,6 +25,4 @@ jsv_definition() ->
    #{members =>
        #{field => string,
          message => string,
-         reason => string},
-     required =>
-       []}}.
+         reason => string}}}.

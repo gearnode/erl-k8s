@@ -27,6 +27,4 @@ jsv_definition() ->
        #{name => string,
          annotations => {object, #{value => string}},
          labels => {object, #{value => string}},
-         resource_version => string},
-     required =>
-       []}}.
+         resource_version => string}}}.
