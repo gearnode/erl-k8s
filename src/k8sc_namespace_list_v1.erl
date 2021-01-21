@@ -8,7 +8,7 @@
 
 -type namespace() ::
         #{kind := k8sc_resource:name(),
-          api_version := binary(),
+          'apiVersion' := binary(),
           metadata := k8sc_object_meta_v1:object_meta(),
           items := k8sc_namespace_v1:namespace()}.
 
@@ -26,8 +26,8 @@ jsv_definition() ->
   {object,
    #{members =>
        #{kind => string,
-         api_version => string,
+         'apiVersion' => string,
          metadata => {ref, k8sc, object_meta_v1},
          items => {array, #{element => {ref, k8sc, namespace_v1}}}},
      required =>
-       []}}.
+       [kind, 'apiVersion']}}.

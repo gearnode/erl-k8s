@@ -26,13 +26,7 @@ get(Name, Type, Options) ->
   Path = iolist_to_binary([BasePath, $/, Name]),
   Request = #{method => <<"GET">>, target => Path},
   SendRequestOptions = maps:with([context], Options),
-  case k8sc_http:send_request(Request, SendRequestOptions) of
-    {ok, Response} ->
-      Body = mhttp_response:body(Response),
-      k8sc_resource:decode(Type, Body);
-    {error, Reason} ->
-      {error, Reason}
-  end.
+  send_request(Type, Request, SendRequestOptions).
 
 -spec list(k8sc_resource:type()) ->
         {ok, k8sc_resource:resource()} | {error, term()}.
@@ -48,10 +42,26 @@ list(Type, Options) ->
   Path = iolist_to_binary(BasePath),
   Request = #{method => <<"GET">>, target => Path},
   SendRequestOptions = maps:with([context], Options),
-  case k8sc_http:send_request(Request, SendRequestOptions) of
+  send_request(Type, Request, SendRequestOptions).
+
+-spec send_request(k8sc_resource:type(),
+                   mhttp:request(), k8sc_http:request_options()) ->
+        {ok, k8sc_resource:resource()} | {error, term()}.
+send_request(OutputType, Request, Options) ->
+  case k8sc_http:send_request(Request, Options) of
     {ok, Response} ->
       Body = mhttp_response:body(Response),
-      k8sc_resource:decode(Type, Body);
+      case mhttp_response:status(Response) of
+        Status when Status < 200; Status > 299 ->
+          case k8sc_resource:decode(status_v1, Body) of
+            {ok, StatusResource} ->
+              {error, {request_failure, StatusResource}};
+            {error, _} ->
+              {error, {request_failure, Status, Body}}
+          end;
+        _ ->
+          k8sc_resource:decode(OutputType, Body)
+      end;
     {error, Reason} ->
       {error, Reason}
   end.

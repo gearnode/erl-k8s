@@ -67,4 +67,7 @@ resource_modules() ->
   [k8sc_namespace_v1,
    k8sc_namespace_list_v1,
    k8sc_namespace_status_v1,
-   k8sc_object_meta_v1].
+   k8sc_object_meta_v1,
+   k8sc_status_v1,
+   k8sc_status_details_v1,
+   k8sc_status_cause_v1].
