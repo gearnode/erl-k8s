@@ -9,7 +9,7 @@
 -type status_details() ::
         #{causes => [k8sc_status_cause_v1:status_cause()],
           group => k8sc_resource:group_name(),
-          kind => k8sc_resource:name(),
+          kind => k8sc_resource:kind(),
           name => k8sc_resource:name(),
           'retryAfterSeconds' => integer(),
           uid => string}.
@@ -19,7 +19,7 @@ definition() ->
   #{type => status_details_v1,
     group => <<"io.k8s.apimachinery.pkg.apis.meta">>,
     version => <<"v1">>,
-    name => <<"StatusDetails">>,
+    kind => <<"StatusDetails">>,
     module => ?MODULE}.
 
 -spec jsv_definition() -> jsv:definition().

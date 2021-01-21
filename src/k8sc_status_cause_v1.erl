@@ -16,7 +16,7 @@ definition() ->
   #{type => status_cause_v1,
     group => <<"io.k8s.apimachinery.pkg.apis.meta">>,
     version => <<"v1">>,
-    name => <<"StatusCause">>,
+    kind => <<"StatusCause">>,
     module => ?MODULE}.
 
 -spec jsv_definition() -> jsv:definition().

@@ -14,7 +14,7 @@ definition() ->
   #{type => namespace_status_v1,
     group => <<"io.k8s.api.core">>,
     version => <<"v1">>,
-    name => <<"NamespaceStatus">>,
+    kind => <<"NamespaceStatus">>,
     module => ?MODULE}.
 
 -spec jsv_definition() -> jsv:definition().

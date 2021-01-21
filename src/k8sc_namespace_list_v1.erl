@@ -7,7 +7,7 @@
 -export_type([namespace/0]).
 
 -type namespace() ::
-        #{kind => k8sc_resource:name(),
+        #{kind => k8sc_resource:kind(),
           'apiVersion' => binary(),
           metadata := k8sc_object_meta_v1:object_meta(),
           items := k8sc_namespace_v1:namespace()}.
@@ -17,7 +17,7 @@ definition() ->
   #{type => namespace_list_v1,
     group => <<"io.k8s.api.core">>,
     version => <<"v1">>,
-    name => <<"NamespaceList">>,
+    kind => <<"NamespaceList">>,
     path => <<"namespaces">>,
     module => ?MODULE}.
 

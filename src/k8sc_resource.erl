@@ -2,12 +2,13 @@
 
 -export([encode/2, decode/2]).
 
--export_type([type/0, name/0, group_name/0, group_version/0,
+-export_type([type/0, name/0, kind/0, group_name/0, group_version/0,
               resource/0, definition/0]).
 
 -type type() :: atom().
 
 -type name() :: binary().
+-type kind() :: binary().
 
 -type group_name() :: binary().
 -type group_version() :: binary().
@@ -18,7 +19,7 @@
         #{type => type(),
           group := group_name(),
           version := group_version(),
-          name := name(),
+          kind := kind(),
           module := module(),
           path => binary()}.
 

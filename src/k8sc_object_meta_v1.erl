@@ -17,7 +17,7 @@ definition() ->
   #{type => object_meta_v1,
     group => <<"io.k8s.apimachinery.pkg.apis.meta">>,
     version => <<"v1">>,
-    name => <<"ObjectMeta">>,
+    kind => <<"ObjectMeta">>,
     module => ?MODULE}.
 
 -spec jsv_definition() -> jsv:definition().
