@@ -17,6 +17,7 @@ jsv_definition() ->
    #{members =>
        #{kind => string,
          api_version => string,
-         metadata => {ref, k8sc, object_meta_v1}},
+         metadata => {ref, k8sc, object_meta_v1},
+         status => {ref, k8sc, namespace_status_v1}},
      required =>
        []}}.

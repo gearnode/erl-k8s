@@ -106,6 +106,9 @@ resource_definitions() ->
   #{namespace_v1 =>
       R(<<"io.k8s.api.core">>, <<"v1">>,
         <<"Namespace">>, <<"namespaces">>, k8sc_namespace_v1),
+    namespace_status_v1 =>
+      R(<<"io.k8s.api.core">>, <<"v1">>,
+        <<"NamespaceStatus">>, undefined, k8sc_namespace_status_v1),
     namespace_list_v1 =>
       R(<<"io.k8s.api.core">>, <<"v1">>,
         <<"NamespaceList">>, <<"namespaces">>, k8sc_namespace_list_v1),
