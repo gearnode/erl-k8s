@@ -1,14 +1,18 @@
 -module(k8s_resources).
 
--export([get/2, get/3, list/1, list/2]).
+-export([get/2, get/3, list/1, list/2, create/2, create/3]).
 
--export_type([get_options/0, list_options/0]).
+-export_type([get_options/0, list_options/0, create_options/0]).
 
 -type get_options() ::
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
 -type list_options() ::
+        #{context => k8s_config:context_name(),
+          namespace => binary()}.
+
+-type create_options() ::
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
@@ -41,6 +45,23 @@ list(Type, Options) ->
   BasePath = resource_path(ResourceDef, Namespace),
   Path = iolist_to_binary(BasePath),
   Request = #{method => <<"GET">>, target => Path},
+  SendRequestOptions = maps:with([context], Options),
+  send_request(Type, Request, SendRequestOptions).
+
+-spec create(k8s_resource:resource(), k8s_resource:type()) ->
+        {ok, k8s_resource:resource()} | {error, term()}.
+create(Resource, Type) ->
+  create(Resource, Type, #{}).
+
+-spec create(k8s_resource:resource(), k8s_resource:type(), create_options()) ->
+        {ok, k8s_resource:resource()} | {error, term()}.
+create(Resource, Type, Options) ->
+  ResourceDef = k8s_resource_registry:resource_definition(Type),
+  Namespace = maps:get(namespace, Options, undefined),
+  BasePath = resource_path(ResourceDef, Namespace),
+  Path = iolist_to_binary(BasePath),
+  Body = k8s_resource:encode(Type, Resource),
+  Request = #{method => <<"POST">>, target => Path, body => Body},
   SendRequestOptions = maps:with([context], Options),
   send_request(Type, Request, SendRequestOptions).
 
