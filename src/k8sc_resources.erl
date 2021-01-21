@@ -24,10 +24,10 @@ get(Type, Name, Options) ->
   SendRequestOptions = maps:with([context], Options),
   case k8sc_http:send_request(Request, SendRequestOptions) of
     {ok, Response} ->
-      %% TODO Decode the response body
-      {ok, Response};
+      Body = mhttp_response:body(Response),
+      k8sc_resource:decode(Type, Body);
     {error, Reason} ->
-      {error, {mhttp, Reason}}
+      {error, Reason}
   end.
 
 -spec resource_path(k8sc_resource_registry:resource_def(),
