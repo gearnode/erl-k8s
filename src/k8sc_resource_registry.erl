@@ -19,7 +19,9 @@
         #{group := group_name(),
           version := group_version(),
           name := k8sc_resource:name(),
-          module := module()}.
+          module := module(),
+          path => binary()}.
+
 -type resource_def_set() ::
         #{k8sc_resource:type() := resource_def()}.
 
@@ -88,15 +90,25 @@ register_resource_definitions(It, Table) ->
 
 -spec resource_definitions() -> resource_def_set().
 resource_definitions() ->
-  R = fun (Group, Version, Name, Module) ->
+  R = fun
+        (Group, Version, Name, undefined, Module) ->
           #{group => Group,
             version => Version,
             name => Name,
+            module => Module};
+        (Group, Version, Name, Path, Module) ->
+          #{group => Group,
+            version => Version,
+            name => Name,
+            path => Path,
             module => Module}
       end,
   #{namespace_v1 =>
       R(<<"io.k8s.api.core">>, <<"v1">>,
-        <<"Namespace">>, k8sc_namespace_v1),
+        <<"Namespace">>, <<"namespaces">>, k8sc_namespace_v1),
+    namespace_list_v1 =>
+      R(<<"io.k8s.api.core">>, <<"v1">>,
+        <<"NamespaceList">>, <<"namespaces">>, k8sc_namespace_list_v1),
     object_meta_v1 =>
       R(<<"io.k8s.apimachinery.pkg.apis.meta.">>, <<"v1">>,
-        <<"ObjectMeta">>, k8sc_object_meta_v1)}.
+        <<"ObjectMeta">>, undefined, k8sc_object_meta_v1)}.

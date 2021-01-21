@@ -186,7 +186,11 @@ send_request(Request, #{name := ContextName,
       TargetRef = mhttp_request:target_uri(Request),
       TargetBase = k8sc_config:cluster_uri(Cluster),
       Target = uri:resolve_reference(TargetRef, TargetBase),
-      mhttp:send_request(Request#{target => Target}, #{pool => PoolId});
+      Header = [{<<"Content-Type">>, <<"application/json">>},
+                {<<"Accept">>, <<"application/json">>}],
+      mhttp:send_request(Request#{target => Target,
+                                  header => Header},
+                         #{pool => PoolId});
     error ->
       {error, {unknown_cluster, ClusterName}}
   end.

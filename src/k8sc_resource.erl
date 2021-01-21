@@ -1,6 +1,6 @@
 -module(k8sc_resource).
 
--export([collection_name/1, encode/2, decode/2]).
+-export([encode/2, decode/2]).
 
 -export_type([type/0, name/0, resource/0]).
 
@@ -11,10 +11,6 @@
 -type resource() :: #{}.
 
 -callback jsv_definition() -> jsv:definition().
-
--spec collection_name(name()) -> name().
-collection_name(Name) ->
-  <<(string:lowercase(Name))/binary, $s>>.
 
 -spec encode(type(), resource()) -> iodata().
 encode(Type, Resource) ->
