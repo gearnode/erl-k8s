@@ -26,7 +26,7 @@ jobs:
           bin_uri="https://github.com/erlang/rebar3/releases/download/${rebar3_version}/rebar3"
           wget -nv $bin_uri
           sudo install -m 0755 rebar3 /usr/local/bin/rebar3
-      - name: "Installing k3s"
+      - name: "Installing K3s"
         run: |
           curl -sfL https://get.k3s.io | sh -
       - name: "Running dialyzer"
@@ -34,4 +34,4 @@ jobs:
           make dialyzer
       - name: "Running tests"
         run: |
-          make test
+          KUBECONFIG=/etc/rancher/k3s/k3s.yaml make test
