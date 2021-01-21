@@ -6,16 +6,14 @@
         #{namespace => binary(),
           context => k8sc_config:context_name()}.
 
-%% TODO verbs: create, delete, deletecollection, get, list, patch, update, watch
-
--spec get(k8sc_resource:type(), k8sc_resource:name()) ->
+-spec get(k8sc_resource:name(), k8sc_resource:type()) ->
         {ok, k8sc_resource:resource()} | {error, term()}.
-get(Type, Name) ->
-  get(Type, Name, #{}).
+get(Name, Type) ->
+  get(Name, Type, #{}).
 
--spec get(k8sc_resource:type(), k8sc_resource:name(), request_options()) ->
+-spec get(k8sc_resource:name(), k8sc_resource:type(), request_options()) ->
         {ok, k8sc_resource:resource()} | {error, term()}.
-get(Type, Name, Options) ->
+get(Name, Type, Options) ->
   ResourceDef = k8sc_resource_registry:resource_def(Type),
   Namespace = maps:get(namespace, Options, undefined),
   BasePath = resource_path(ResourceDef, Namespace),
