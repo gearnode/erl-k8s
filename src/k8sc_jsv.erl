@@ -4,6 +4,7 @@
 
 -spec catalog() -> jsv:catalog().
 catalog() ->
-  maps:fold(fun (Type, #{module := Module}, Acc) ->
-                Acc#{Type => Module:jsv_definition()}
-            end, #{}, k8sc_resource_registry:resource_definitions()).
+  lists:foldl(fun (M, Acc) ->
+                  #{type := Type} = M:definition(),
+                  Acc#{Type => M:jsv_definition()}
+              end, #{}, k8sc_resource_registry:resource_modules()).

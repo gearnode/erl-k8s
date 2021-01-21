@@ -2,14 +2,27 @@
 
 -export([encode/2, decode/2]).
 
--export_type([type/0, name/0, resource/0]).
+-export_type([type/0, name/0, group_name/0, group_version/0,
+              resource/0, definition/0]).
 
 -type type() :: atom().
 
 -type name() :: binary().
 
+-type group_name() :: binary().
+-type group_version() :: binary().
+
 -type resource() :: #{}.
 
+-type definition() ::
+        #{type => type(),
+          group := group_name(),
+          version := group_version(),
+          name := name(),
+          module := module(),
+          path => binary()}.
+
+-callback definition() -> k8sc_resource:definition().
 -callback jsv_definition() -> jsv:definition().
 
 -spec encode(type(), resource()) -> iodata().

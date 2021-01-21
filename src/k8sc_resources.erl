@@ -20,7 +20,7 @@ get(Name, Type) ->
 -spec get(k8sc_resource:name(), k8sc_resource:type(), get_options()) ->
         {ok, k8sc_resource:resource()} | {error, term()}.
 get(Name, Type, Options) ->
-  ResourceDef = k8sc_resource_registry:resource_def(Type),
+  ResourceDef = k8sc_resource_registry:resource_definition(Type),
   Namespace = maps:get(namespace, Options, undefined),
   BasePath = resource_path(ResourceDef, Namespace),
   Path = iolist_to_binary([BasePath, $/, Name]),
@@ -42,7 +42,7 @@ list(Type) ->
 -spec list(k8sc_resource:type(), list_options()) ->
         {ok, k8sc_resource:resource()} | {error, term()}.
 list(Type, Options) ->
-  ResourceDef = k8sc_resource_registry:resource_def(Type),
+  ResourceDef = k8sc_resource_registry:resource_definition(Type),
   Namespace = maps:get(namespace, Options, undefined),
   BasePath = resource_path(ResourceDef, Namespace),
   Path = iolist_to_binary(BasePath),
@@ -56,7 +56,7 @@ list(Type, Options) ->
       {error, Reason}
   end.
 
--spec resource_path(k8sc_resource_registry:resource_def(),
+-spec resource_path(k8sc_resource:definition(),
                    Namespace :: binary() | undefined) -> iolist().
 resource_path(Def = #{path := Path}, Namespace) ->
   case Namespace of
@@ -66,7 +66,7 @@ resource_path(Def = #{path := Path}, Namespace) ->
       [base_resource_path(Def), "/namespaces/", Namespace, $/, Path]
   end.
 
--spec base_resource_path(k8sc_resource_registry:resource_def()) -> iolist().
+-spec base_resource_path(k8sc_resource:definition()) -> iolist().
 base_resource_path(Def = #{version := Version}) ->
   case maps:get(group, Def) of
     <<"io.k8s.api.core">> ->

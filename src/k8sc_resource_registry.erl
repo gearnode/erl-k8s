@@ -4,26 +4,10 @@
 
 -behaviour(gen_server).
 
--export([start_link/0, stop/0, resource_def/1, resource_definitions/0]).
+-export([start_link/0, stop/0, resource_definition/1, resource_modules/0]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2, handle_info/2]).
 
--export_type([group_name/0, group_version/0,
-              resource_def/0, resource_def_set/0]).
-
 -type state() :: #{table := ets:tab()}.
-
--type group_name() :: binary().
--type group_version() :: binary().
-
--type resource_def() ::
-        #{group := group_name(),
-          version := group_version(),
-          name := k8sc_resource:name(),
-          module := module(),
-          path => binary()}.
-
--type resource_def_set() ::
-        #{k8sc_resource:type() := resource_def()}.
 
 -spec start_link() -> et_gen_server:start_ret().
 start_link() ->
@@ -33,8 +17,8 @@ start_link() ->
 stop() ->
   gen_server:stop(?MODULE).
 
--spec resource_def(k8sc_resource:type()) -> resource_def().
-resource_def(Type) ->
+-spec resource_definition(k8sc_resource:type()) -> k8sc_resource:definition().
+resource_definition(Type) ->
   case ets:lookup_element(?MODULE, Type, 2) of
     false ->
       error({unknown_resource, Type});
@@ -73,45 +57,14 @@ handle_info(Msg, State) ->
 
 -spec register_resource_definitions(ets:tab()) -> ok.
 register_resource_definitions(Table) ->
-  Defs = resource_definitions(),
-  register_resource_definitions(maps:iterator(Defs), Table).
+  lists:foreach(fun (M) ->
+                    (Def = #{type := Type}) = M:definition(),
+                    ets:insert(Table, {Type, Def})
+                end, resource_modules()).
 
--spec register_resource_definitions(maps:iterator(k8sc_resource:type(),
-                                                  resource_def()),
-                                    ets:tab()) -> ok.
-register_resource_definitions(It, Table) ->
-  case maps:next(It) of
-    {Type, Def, It2} ->
-      ets:insert(Table, {Type, Def}),
-      register_resource_definitions(It2, Table);
-    none ->
-      ok
-  end.
-
--spec resource_definitions() -> resource_def_set().
-resource_definitions() ->
-  R = fun
-        (Group, Version, Name, undefined, Module) ->
-          #{group => Group,
-            version => Version,
-            name => Name,
-            module => Module};
-        (Group, Version, Name, Path, Module) ->
-          #{group => Group,
-            version => Version,
-            name => Name,
-            path => Path,
-            module => Module}
-      end,
-  #{namespace_v1 =>
-      R(<<"io.k8s.api.core">>, <<"v1">>,
-        <<"Namespace">>, <<"namespaces">>, k8sc_namespace_v1),
-    namespace_status_v1 =>
-      R(<<"io.k8s.api.core">>, <<"v1">>,
-        <<"NamespaceStatus">>, undefined, k8sc_namespace_status_v1),
-    namespace_list_v1 =>
-      R(<<"io.k8s.api.core">>, <<"v1">>,
-        <<"NamespaceList">>, <<"namespaces">>, k8sc_namespace_list_v1),
-    object_meta_v1 =>
-      R(<<"io.k8s.apimachinery.pkg.apis.meta.">>, <<"v1">>,
-        <<"ObjectMeta">>, undefined, k8sc_object_meta_v1)}.
+-spec resource_modules() -> [module()].
+resource_modules() ->
+  [k8sc_namespace_v1,
+   k8sc_namespace_list_v1,
+   k8sc_namespace_status_v1,
+   k8sc_object_meta_v1].

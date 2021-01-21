@@ -2,7 +2,7 @@
 
 -behaviour(k8sc_resource).
 
--export([jsv_definition/0]).
+-export([definition/0, jsv_definition/0]).
 
 -export_type([namespace/0]).
 
@@ -11,6 +11,15 @@
           api_version := binary(),
           metadata := k8sc_object_meta_v1:object_meta(),
           items := k8sc_namespace_v1:namespace()}.
+
+-spec definition() -> k8sc_resource:definition().
+definition() ->
+  #{type => namespace_list_v1,
+    group => <<"io.k8s.api.core">>,
+    version => <<"v1">>,
+    name => <<"NamespaceList">>,
+    path => <<"namespaces">>,
+    module => ?MODULE}.
 
 -spec jsv_definition() -> jsv:definition().
 jsv_definition() ->
