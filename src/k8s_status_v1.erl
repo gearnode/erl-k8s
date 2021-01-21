@@ -12,7 +12,7 @@
           code => integer(),
           details => k8s_status_details_v1:status_details(),
           message => binary(),
-          %metadata => k8s_list_meta_v1:list_meta(),
+          metadata => k8s_list_meta_v1:list_meta(),
           reason => binary(),
           status => binary()}.
 
@@ -33,6 +33,6 @@ jsv_definition() ->
          code => integer,
          details => {ref, status_details_v1},
          message => string,
-         %metadata => {ref, list_meta_v1},
+         metadata => {ref, list_meta_v1},
          reason => string,
          status => string}}}.

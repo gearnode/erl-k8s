@@ -67,6 +67,7 @@ resource_modules() ->
   [k8s_namespace_v1,
    k8s_namespace_list_v1,
    k8s_namespace_status_v1,
+   k8s_list_meta_v1,
    k8s_object_meta_v1,
    k8s_status_v1,
    k8s_status_details_v1,
