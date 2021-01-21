@@ -13,7 +13,8 @@ resources_test_() ->
        error_logger:tty(true)
    end,
    [fun get_resource/0,
-    fun get_unknown_resource/0]}.
+    fun get_unknown_resource/0,
+    fun list_resources/0]}.
 
 get_resource() ->
   ?assertMatch({ok, #{kind := <<"Namespace">>,
@@ -23,3 +24,8 @@ get_resource() ->
 get_unknown_resource() ->
   ?assertMatch({error, {request_failure, #{code := 404}}},
                k8s_resources:get(<<"does_not_exist">>, namespace_v1)).
+
+list_resources() ->
+  ?assertMatch({ok, #{kind := <<"NamespaceList">>,
+                      items := _}},
+               k8s_resources:list(namespace_list_v1)).
