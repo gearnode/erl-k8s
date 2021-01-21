@@ -1,6 +1,6 @@
--module(k8sc_object_meta_v1).
+-module(k8s_object_meta_v1).
 
--behaviour(k8sc_resource).
+-behaviour(k8s_resource).
 
 -export([definition/0, jsv_definition/0]).
 
@@ -12,7 +12,7 @@
           labels => #{binary() := binary()},
           resource_version => string()}.
 
--spec definition() -> k8sc_resource:definition().
+-spec definition() -> k8s_resource:definition().
 definition() ->
   #{type => object_meta_v1,
     group => <<"io.k8s.apimachinery.pkg.apis.meta">>,

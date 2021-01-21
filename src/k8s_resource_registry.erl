@@ -1,4 +1,4 @@
--module(k8sc_resource_registry).
+-module(k8s_resource_registry).
 
 -include_lib("kernel/include/logger.hrl").
 
@@ -17,7 +17,7 @@ start_link() ->
 stop() ->
   gen_server:stop(?MODULE).
 
--spec resource_definition(k8sc_resource:type()) -> k8sc_resource:definition().
+-spec resource_definition(k8s_resource:type()) -> k8s_resource:definition().
 resource_definition(Type) ->
   case ets:lookup_element(?MODULE, Type, 2) of
     false ->
@@ -28,7 +28,7 @@ resource_definition(Type) ->
 
 -spec init(list()) -> et_gen_server:init_ret(state()).
 init([]) ->
-  logger:update_process_metadata(#{domain => [k8sc, resource_registry]}),
+  logger:update_process_metadata(#{domain => [k8s, resource_registry]}),
   Table = ets:new(?MODULE, [set, named_table, {read_concurrency, true}]),
   register_resource_definitions(Table),
   State = #{table => Table},
@@ -64,10 +64,10 @@ register_resource_definitions(Table) ->
 
 -spec resource_modules() -> [module()].
 resource_modules() ->
-  [k8sc_namespace_v1,
-   k8sc_namespace_list_v1,
-   k8sc_namespace_status_v1,
-   k8sc_object_meta_v1,
-   k8sc_status_v1,
-   k8sc_status_details_v1,
-   k8sc_status_cause_v1].
+  [k8s_namespace_v1,
+   k8s_namespace_list_v1,
+   k8s_namespace_status_v1,
+   k8s_object_meta_v1,
+   k8s_status_v1,
+   k8s_status_details_v1,
+   k8s_status_cause_v1].

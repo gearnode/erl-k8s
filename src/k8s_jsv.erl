@@ -1,4 +1,4 @@
--module(k8sc_jsv).
+-module(k8s_jsv).
 
 -export([catalog/0]).
 
@@ -7,4 +7,4 @@ catalog() ->
   lists:foldl(fun (M, Acc) ->
                   #{type := Type} = M:definition(),
                   Acc#{Type => M:jsv_definition()}
-              end, #{}, k8sc_resource_registry:resource_modules()).
+              end, #{}, k8s_resource_registry:resource_modules()).

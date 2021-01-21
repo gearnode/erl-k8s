@@ -1,2 +1,0 @@
--module(k8sc).
-

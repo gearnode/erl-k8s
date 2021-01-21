@@ -1,4 +1,4 @@
--module(k8sc_config).
+-module(k8s_config).
 
 -export([cluster/2, cluster_uri/1, user/2, context/2, default_context/1,
          default_path/0, load/0, load/1, jsv_catalog/0]).
@@ -109,7 +109,7 @@ read(Data) ->
 read_value(Value) ->
   Options = #{disable_verification => true,
               invalid_member_handling => keep},
-  case jsv:validate(Value, {ref, k8sc_config, config}, Options) of
+  case jsv:validate(Value, {ref, k8s_config, config}, Options) of
     {ok, ConfigData0} ->
       ConfigData = normalize_keys(ConfigData0),
       Items = fun (Key, ItemName) ->

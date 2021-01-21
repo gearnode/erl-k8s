@@ -1,6 +1,6 @@
--module(k8sc_status_cause_v1).
+-module(k8s_status_cause_v1).
 
--behaviour(k8sc_resource).
+-behaviour(k8s_resource).
 
 -export([definition/0, jsv_definition/0]).
 
@@ -11,7 +11,7 @@
           message => binary(),
           reason => binary()}.
 
--spec definition() -> k8sc_resource:definition().
+-spec definition() -> k8s_resource:definition().
 definition() ->
   #{type => status_cause_v1,
     group => <<"io.k8s.apimachinery.pkg.apis.meta">>,

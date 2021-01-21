@@ -1,17 +1,17 @@
--module(k8sc_namespace_v1).
+-module(k8s_namespace_v1).
 
--behaviour(k8sc_resource).
+-behaviour(k8s_resource).
 
 -export([definition/0, jsv_definition/0]).
 
 -export_type([namespace/0]).
 
 -type namespace() ::
-        #{kind => k8sc_resource:kind(),
+        #{kind => k8s_resource:kind(),
           'apiVersion' => binary(),
-          metadata => k8sc_object_meta_v1:object_meta()}.
+          metadata => k8s_object_meta_v1:object_meta()}.
 
--spec definition() -> k8sc_resource:definition().
+-spec definition() -> k8s_resource:definition().
 definition() ->
   #{type => namespace_v1,
     group => <<"io.k8s.api.core">>,
@@ -26,5 +26,5 @@ jsv_definition() ->
    #{members =>
        #{kind => string,
          'apiVersion' => string,
-         metadata => {ref, k8sc, object_meta_v1},
-         status => {ref, k8sc, namespace_status_v1}}}}.
+         metadata => {ref, k8s, object_meta_v1},
+         status => {ref, k8s, namespace_status_v1}}}}.

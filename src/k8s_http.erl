@@ -1,4 +1,4 @@
--module(k8sc_http).
+-module(k8s_http).
 
 -export([pool_ids/1, pools/1, pool_options/1, pool_options/2,
          send_request/1, send_request/2]).
@@ -6,15 +6,15 @@
 -export_type([request_options/0]).
 
 -type request_options() ::
-        #{context => k8sc_config:context_name()}.
+        #{context => k8s_config:context_name()}.
 
--spec pool_ids(k8sc_config:config()) -> [mhttp:pool_id()].
+-spec pool_ids(k8s_config:config()) -> [mhttp:pool_id()].
 pool_ids(#{contexts := Contexts}) ->
   maps:fold(fun (Name, _, Acc) ->
                 [pool_id(Name) | Acc]
             end, [], Contexts).
 
--spec pools(k8sc_config:config()) ->
+-spec pools(k8s_config:config()) ->
         {ok, [{mhttp:pool_id(), mhttp_pool:options()}]} | {error, term()}.
 pools(Config = #{contexts := Contexts}) ->
   try
@@ -32,28 +32,28 @@ pools(Config = #{contexts := Contexts}) ->
       {error, Reason}
   end.
 
--spec pool_id(k8sc_config:context_name()) -> mhttp:pool_id().
+-spec pool_id(k8s_config:context_name()) -> mhttp:pool_id().
 pool_id(Name) ->
-  binary_to_atom(<<"k8sc_", Name/binary>>).
+  binary_to_atom(<<"k8s_", Name/binary>>).
 
--spec pool_options(k8sc_config:config()) ->
+-spec pool_options(k8s_config:config()) ->
         {ok, mhttp_pool:options()} | {error, term()}.
 pool_options(Config = #{current_context := ContextName}) ->
   pool_options(Config, ContextName);
 pool_options(_) ->
   {error, missing_context}.
 
--spec pool_options(k8sc_config:config(), k8sc_config:context_name()) ->
+-spec pool_options(k8s_config:config(), k8s_config:context_name()) ->
         {ok, mhttp_pool:options()} | {error, term()}.
 pool_options(Config, ContextName) ->
-  case k8sc_config:context(ContextName, Config) of
+  case k8s_config:context(ContextName, Config) of
     {ok, #{cluster := ClusterName, user := UserName}} ->
       try
-        Cluster = case k8sc_config:cluster(ClusterName, Config) of
+        Cluster = case k8s_config:cluster(ClusterName, Config) of
                     {ok, C} -> C;
                     error -> throw({error, {unknown_cluster, ClusterName}})
                   end,
-        User = case k8sc_config:user(UserName, Config) of
+        User = case k8s_config:user(UserName, Config) of
                  {ok, U} -> U;
                  error -> throw({error, {unknown_user, UserName}})
                end,
@@ -66,14 +66,14 @@ pool_options(Config, ContextName) ->
       {error, unknown_context}
   end.
 
--spec pool_options(k8sc_config:config(), k8sc_config:cluster(),
-                   k8sc_config:user()) ->
+-spec pool_options(k8s_config:config(), k8s_config:cluster(),
+                   k8s_config:user()) ->
         mhttp_pool:options().
 pool_options(Config, Cluster, User) ->
   #{client_options => client_options(Config, Cluster, User)}.
 
--spec client_options(k8sc_config:config(), k8sc_config:cluster(),
-                     k8sc_config:user()) ->
+-spec client_options(k8s_config:config(), k8s_config:cluster(),
+                     k8s_config:user()) ->
         mhttp_client:options().
 client_options(_Config, Cluster, User) ->
   ConnectOptions0 = [{verify, verify_peer}],
@@ -160,31 +160,31 @@ send_request(Request) ->
 -spec send_request(mhttp:request(), request_options()) ->
         {ok, mhttp:response()} | {error, term()}.
 send_request(Request, Options) ->
-  Config = persistent_term:get(k8sc_config),
+  Config = persistent_term:get(k8s_config),
   case maps:find(context, Options) of
     {ok, Name} ->
-      case k8sc_config:context(Name, Config) of
+      case k8s_config:context(Name, Config) of
         {ok, Context} ->
           send_request(Request, Context, Config, Options);
         error ->
           {error, {unknown_context, Name}}
       end;
     error ->
-      Context = k8sc_config:default_context(Config),
+      Context = k8s_config:default_context(Config),
       send_request(Request, Context, Config, Options)
   end.
 
--spec send_request(mhttp:request(), k8sc_config:context(),
-                   k8sc_config:config(), request_options()) ->
+-spec send_request(mhttp:request(), k8s_config:context(),
+                   k8s_config:config(), request_options()) ->
         {ok, mhttp:response()} | {error, term()}.
 send_request(Request, #{name := ContextName,
                         cluster := ClusterName},
              Config, _Options) ->
-  case k8sc_config:cluster(ClusterName, Config) of
+  case k8s_config:cluster(ClusterName, Config) of
     {ok, Cluster} ->
       PoolId = pool_id(ContextName),
       TargetRef = mhttp_request:target_uri(Request),
-      TargetBase = k8sc_config:cluster_uri(Cluster),
+      TargetBase = k8s_config:cluster_uri(Cluster),
       Target = uri:resolve_reference(TargetRef, TargetBase),
       Header = [{<<"Content-Type">>, <<"application/json">>},
                 {<<"Accept">>, <<"application/json">>}],

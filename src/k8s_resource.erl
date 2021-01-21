@@ -1,4 +1,4 @@
--module(k8sc_resource).
+-module(k8s_resource).
 
 -export([encode/2, decode/2]).
 
@@ -23,12 +23,12 @@
           module := module(),
           path => binary()}.
 
--callback definition() -> k8sc_resource:definition().
+-callback definition() -> k8s_resource:definition().
 -callback jsv_definition() -> jsv:definition().
 
 -spec encode(type(), resource()) -> iodata().
 encode(Type, Resource) ->
-  Definition = {ref, k8sc, Type},
+  Definition = {ref, k8s, Type},
   Options = #{disable_verification => true,
               invalid_member_handling => remove},
   case jsv:generate(Resource, Definition, Options) of
@@ -42,7 +42,7 @@ encode(Type, Resource) ->
 decode(Type, Data) ->
   case json:parse(Data) of
     {ok, Value} ->
-      Definition = {ref, k8sc, Type},
+      Definition = {ref, k8s, Type},
       Options = #{disable_verification => true,
                   invalid_member_handling => remove},
       jsv:validate(Value, Definition, Options);

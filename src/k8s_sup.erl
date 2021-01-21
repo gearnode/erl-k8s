@@ -1,4 +1,4 @@
--module(k8sc_sup).
+-module(k8s_sup).
 
 -behaviour(supervisor).
 
@@ -10,7 +10,7 @@ start_link() ->
 
 init([]) ->
   Children = [#{id => resource_registry,
-                start => {k8sc_resource_registry, start_link, []}}],
+                start => {k8s_resource_registry, start_link, []}}],
   Flags = #{strategy => one_for_one,
             intensity => 1,
             period => 5},
