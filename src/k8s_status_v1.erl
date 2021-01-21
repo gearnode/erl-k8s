@@ -8,7 +8,7 @@
 
 -type status() ::
         #{kind => k8s_resource:name(),
-          'apiVersion' => binary(),
+          apiVersion => binary(),
           code => integer(),
           details => k8s_status_details_v1:status_details(),
           message => binary(),
@@ -29,7 +29,7 @@ jsv_definition() ->
   {object,
    #{members =>
        #{kind => string,
-         'apiVersion' => string,
+         apiVersion => string,
          code => integer,
          details => {ref, status_details_v1},
          message => string,
