@@ -3,10 +3,19 @@
 -export([cluster/2, cluster_uri/1, user/2, context/2, default_context/1,
          default_path/0, load/0, load/1, jsv_catalog/0]).
 
--export_type([config/0,
+-export_type([error_reason/0,
+              config/0,
               cluster_name/0, cluster/0,
               user_name/0, user/0,
               context_name/0, context/0]).
+
+-type error_reason() ::
+        kubectl_not_found
+      | {kubectl_signal, Signo :: pos_integer()}
+      | {kubectl_exit, Status :: pos_integer()}
+      | {kubectl_io, PosixCode :: term} % XXX file:posix() ?
+      | {invalid_json_data, json:error()}
+      | {invalid_data, [jsv:value_error()]}.
 
 %% See
 %% https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
@@ -75,15 +84,15 @@ default_path() ->
       Path
   end.
 
--spec load() -> {ok, config()} | {error, term()}.
+-spec load() -> {ok, config()} | {error, error_reason()}.
 load() ->
   load(default_path()).
 
--spec load(file:name_all()) -> {ok, config()} | {error, term()}.
+-spec load(file:name_all()) -> {ok, config()} | {error, error_reason()}.
 load(ConfigPath) ->
   case os:find_executable("kubectl") of
     false ->
-      {error, missing_kubectl};
+      {error, kubectl_not_found};
     KubectlPath ->
       Args = ["kubectl", "config", "view", "--kubeconfig", ConfigPath,
               "--raw", "-o", "json"],
@@ -172,13 +181,13 @@ read_program_output(Port, Acc) ->
     {Port, {exit_status, 0}} ->
       Acc;
     {Port, {exit_status, Status}} when Status > 128 ->
-      throw({error, {signal, Status - 128}});
+      throw({error, {kubectl_signal, Status - 128}});
     {Port, {exit_status, Status}} ->
-      throw({error, {exit, Status}});
+      throw({error, {kubectl_exit, Status}});
     {Port, {data, Data}} ->
       read_program_output(Port, <<Acc/binary, Data/binary>>);
     {'EXIT', Port, PosixCode} ->
-      throw({error, {port, PosixCode}})
+      throw({error, {kubectl_io, PosixCode}})
   end.
 
 -spec jsv_catalog() -> jsv:catalog().
