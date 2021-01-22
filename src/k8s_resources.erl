@@ -1,8 +1,10 @@
 -module(k8s_resources).
 
--export([get/2, get/3, list/1, list/2, create/2, create/3]).
+-export([get/2, get/3, list/1, list/2,
+         create/2, create/3, delete/2, delete/3]).
 
--export_type([get_options/0, list_options/0, create_options/0]).
+-export_type([get_options/0, list_options/0,
+              create_options/0, delete_options/0]).
 
 -type get_options() ::
         #{context => k8s_config:context_name(),
@@ -13,6 +15,10 @@
           namespace => binary()}.
 
 -type create_options() ::
+        #{context => k8s_config:context_name(),
+          namespace => binary()}.
+
+-type delete_options() ::
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
@@ -62,6 +68,22 @@ create(Resource, Type, Options) ->
   Path = iolist_to_binary(BasePath),
   Body = k8s_resource:encode(Type, Resource),
   Request = #{method => <<"POST">>, target => Path, body => Body},
+  SendRequestOptions = maps:with([context], Options),
+  send_request(Type, Request, SendRequestOptions).
+
+-spec delete(k8s_resource:name(), k8s_resource:type()) ->
+        {ok, k8s_resource:resource()} | {error, term()}.
+delete(Name, Type) ->
+  delete(Name, Type, #{}).
+
+-spec delete(k8s_resource:name(), k8s_resource:type(), delete_options()) ->
+        {ok, k8s_resource:resource()} | {error, term()}.
+delete(Name, Type, Options) ->
+  ResourceDef = k8s_resource_registry:resource_definition(Type),
+  Namespace = maps:get(namespace, Options, undefined),
+  BasePath = resource_path(ResourceDef, Namespace),
+  Path = iolist_to_binary([BasePath, $/, Name]),
+  Request = #{method => <<"DELETE">>, target => Path},
   SendRequestOptions = maps:with([context], Options),
   send_request(Type, Request, SendRequestOptions).
 
