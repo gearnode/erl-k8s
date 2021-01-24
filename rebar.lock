@@ -4,7 +4,7 @@
   0},
  {<<"json">>,
   {git,"https://github.com/galdor/erl-json.git",
-       {ref,"2f3a88b8650b4660bf48750cc16462a8103f21a8"}},
+       {ref,"6549a08a4ece8ed2fc2d8857cfe722546be5fec8"}},
   0},
  {<<"jsv">>,
   {git,"https://github.com/galdor/erl-jsv.git",
