@@ -19,11 +19,11 @@ stop() ->
 
 -spec resource_definition(k8s_resource:type()) -> k8s_resource:definition().
 resource_definition(Type) ->
-  case ets:lookup_element(?MODULE, Type, 2) of
-    false ->
-      error({unknown_resource, Type});
-    Def ->
-      Def
+  case ets:lookup(?MODULE, Type) of
+    [{Type, Def}] ->
+      Def;
+    [] ->
+      error({unknown_resource, Type})
   end.
 
 -spec init(list()) -> et_gen_server:init_ret(state()).
