@@ -16,7 +16,8 @@
 
 -type create_options() ::
         #{context => k8s_config:context_name(),
-          namespace => binary()}.
+          namespace => binary(),
+          dry_run => boolean()}.
 
 -type delete_options() ::
         #{context => k8s_config:context_name(),
@@ -67,9 +68,21 @@ create(Resource, Type, Options) ->
   BasePath = resource_path(ResourceDef, Namespace),
   Path = iolist_to_binary(BasePath),
   Body = k8s_resource:encode(Type, Resource),
-  Request = #{method => <<"POST">>, target => Path, body => Body},
+  Query = create_query(Options),
+  Request = #{method => <<"POST">>,
+              target => #{path => Path, query => Query},
+              body => Body},
   SendRequestOptions = maps:with([context], Options),
   send_request(Type, Request, SendRequestOptions).
+
+-spec create_query(create_options()) -> uri:query().
+create_query(Options) ->
+  maps:fold(fun
+              (dry_run, true, Acc) ->
+               [{<<"dryRun">>, <<"All">>} | Acc];
+              (_, _, Acc) ->
+               Acc
+           end, [], Options).
 
 -spec delete(k8s_resource:name(), k8s_resource:type()) ->
         {ok, k8s_resource:resource()} | {error, term()}.
