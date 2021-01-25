@@ -9,7 +9,8 @@
 -type namespace() ::
         #{kind => k8s_resource:kind(),
           apiVersion => binary(),
-          metadata => k8s_object_meta_v1:object_meta()}.
+          metadata => k8s_object_meta_v1:object_meta(),
+          status => k8s_namespace_status_v1:namespace_status()}.
 
 -spec definition() -> k8s_resource:definition().
 definition() ->
