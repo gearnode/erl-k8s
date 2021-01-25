@@ -14,7 +14,7 @@
 -spec definition() -> k8s_resource:definition().
 definition() ->
   #{type => job_v1,
-    group => <<"io.k8s.api.core">>,
+    group => <<"batch">>,
     version => <<"v1">>,
     kind => <<"Job">>,
     path => <<"jobs">>,
