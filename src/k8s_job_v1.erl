@@ -9,7 +9,9 @@
 -type job() ::
         #{kind => k8s_resource:kind(),
           apiVersion => binary(),
-          metadata => k8s_object_meta_v1:object_meta()}.
+          metadata => k8s_object_meta_v1:object_meta(),
+          status => k8s_job_status_v1:job_status(),
+          spec => k8s_job_spec_v1:job_spec()}.
 
 -spec definition() -> k8s_resource:definition().
 definition() ->
@@ -26,4 +28,6 @@ jsv_definition() ->
    #{members =>
        #{kind => string,
          apiVersion => string,
-         metadata => {ref, k8s, object_meta_v1}}}}.
+         metadata => {ref, k8s, object_meta_v1},
+         status => {ref, k8s, job_status_v1},
+         spec => {ref, k8s, job_spec_v1}}}}.

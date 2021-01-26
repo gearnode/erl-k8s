@@ -64,12 +64,18 @@ register_resource_definitions(Table) ->
 
 -spec resource_modules() -> [module()].
 resource_modules() ->
-  [k8s_namespace_v1,
+  [k8s_job_condition_v1,
+   k8s_job_spec_v1,
+   k8s_job_status_v1,
+   k8s_job_v1,
+   k8s_label_selector_requirement_v1,
+   k8s_label_selector_v1,
+   k8s_list_meta_v1,
    k8s_namespace_list_v1,
    k8s_namespace_status_v1,
-   k8s_job_v1,
-   k8s_list_meta_v1,
+   k8s_namespace_v1,
    k8s_object_meta_v1,
-   k8s_status_v1,
+   k8s_status_cause_v1,
    k8s_status_details_v1,
-   k8s_status_cause_v1].
+   k8s_status_v1,
+   k8s_time_v1].
