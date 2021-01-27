@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+require("uri")
+require("open-uri")
+require("json")
+
+output_path = "#{__dir__}/../priv/kubernetes-openapi-specification.json"
+
+uri = {schema: "https",
+       host: "raw.githubusercontent.com",
+       path: "/kubernetes/kubernetes/master/api/openapi-spec/swagger.json"}
+spec = JSON.parse(URI::HTTP.build(uri).read())
+
+spec["definitions"].reject! do |key, value|
+  key.match /^io\.k8s.apiextensions-apiserver\.pkg\.apis\.apiextensions\./
+end
+
+spec["paths"].reject! do |key, value|
+  key.match /^\/apis\/apiextensions\.k8s\.io\//
+end
+
+File.write(output_path, JSON.pretty_generate(spec))
