@@ -10,6 +10,7 @@
     uri,
     mhttp,
     json,
-    jsv]},
+    jsv,
+    openapi]},
   {env, []},
   {modules, []}]}.
