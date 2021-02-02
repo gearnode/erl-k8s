@@ -7,7 +7,8 @@ generate_openapi_modules() ->
   {ok, _} = application:ensure_all_started(openapi),
   SpecPath = filename:join("priv", "kubernetes-openapi-specification.json"),
   OutputDir = "src",
-  Options = #{module_prefix => <<"k8s_">>},
+  Options = #{module_prefix => <<"k8s_">>,
+              rename_model => fun k8s_openapi:rename_model/1},
   case openapi:generate(SpecPath, OutputDir, Options) of
     ok ->
       halt(0);
