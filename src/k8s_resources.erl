@@ -1,12 +1,13 @@
 -module(k8s_resources).
 
--export([get/3, list/2, create/3, delete/3, update/4,
+-export([get/3, list/2, create/3, delete/3, delete_collection/2, update/4,
          collection_path/2, path/3,
          definition/1]).
 
 -export_type([id/0, definition/0, name/0, resource/0,
               options/0, get_options/0, list_options/0, create_options/0,
-              delete_options/0, update_options/0]).
+              delete_options/0, delete_collection_options/0,
+              update_options/0]).
 
 %% TODO k8s_model:id()
 -type id() :: core_v1_namespace
@@ -41,6 +42,10 @@
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
+-type delete_collection_options() ::
+        #{context => k8s_config:context_name(),
+          namespace => binary()}.
+
 -type update_options() ::
         #{context => k8s_config:context_name(),
           namespace => binary()}.
@@ -68,6 +73,13 @@ create(Id, Resource, Options) ->
 delete(Id, Name, Options) ->
   Request = #{method => <<"DELETE">>,
               target => path(Id, Name, Options)},
+  send_request(Request, Id, Options).
+
+-spec delete_collection(id(), delete_collection_options()) ->
+        k8s:result(resource()).
+delete_collection(Id, Options) ->
+  Request = #{method => <<"DELETE">>,
+              target => collection_path(Id, Options)},
   send_request(Request, Id, Options).
 
 -spec update(id(), name(), resource(), update_options()) ->
