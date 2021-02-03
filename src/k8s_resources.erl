@@ -1,10 +1,11 @@
 -module(k8s_resources).
 
--export([get/3, create/3,
+-export([get/3, create/3, delete/3,
          collection_path/2, path/3,
          definition/1]).
 
--export_type([id/0, definition/0, name/0, resource/0]).
+-export_type([id/0, definition/0, name/0, resource/0,
+             options/0, get_options/0, create_options/0, delete_options/0]).
 
 -type id() :: core_v1_namespace. % TODO k8s_model:id().
 
@@ -29,6 +30,10 @@
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
+-type delete_options() ::
+        #{context => k8s_config:context_name(),
+          namespace => binary()}.
+
 -spec get(id(), name(), get_options()) -> k8s:result(resource()).
 get(Id, Name, Options) ->
   Request = #{method => <<"GET">>,
@@ -49,6 +54,21 @@ create(Id, Resource, Options) ->
   Request = #{method => <<"POST">>,
               target => collection_path(Id, Options),
               body => encode_resource(Resource, {ref, k8s, Id})},
+  RequestOptions = maps:with([context], Options),
+  case k8s_http:send_request(Request, RequestOptions) of
+    {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
+      decode_response_body(Response, {ref, k8s, Id});
+    {ok, Response} ->
+      decode_response_body(Response,
+                           {ref, k8s, apimachinery_apis_meta_v1_status});
+    {error, Reason} ->
+      {error, Reason}
+  end.
+
+-spec delete(id(), name(), delete_options()) -> k8s:result(resource()).
+delete(Id, Name, Options) ->
+  Request = #{method => <<"DELETE">>,
+              target => path(Id, Name, Options)},
   RequestOptions = maps:with([context], Options),
   case k8s_http:send_request(Request, RequestOptions) of
     {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
