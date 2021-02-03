@@ -1,6 +1,6 @@
 -module(k8s_resources).
 
--export([get/3, create/3, delete/3,
+-export([get/3, create/3, delete/3, update/4,
          collection_path/2, path/3,
          definition/1]).
 
@@ -51,6 +51,13 @@ create(Id, Resource, Options) ->
 delete(Id, Name, Options) ->
   Request = #{method => <<"DELETE">>,
               target => path(Id, Name, Options)},
+  send_request(Request, Id, Options).
+
+-spec update(id(), name(), resource(), create_options()) -> k8s:result(resource()).
+update(Id, Name, Resource, Options) ->
+  Request = #{method => <<"PUT">>,
+              target => path(Id, Name, Options),
+              body => encode_resource(Resource, {ref, k8s, Id})},
   send_request(Request, Id, Options).
 
 -spec send_request(mhttp:request(), id(), options()) -> k8s:result(resource()).
