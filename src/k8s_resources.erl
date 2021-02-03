@@ -1,13 +1,15 @@
 -module(k8s_resources).
 
--export([get/3, create/3, delete/3, update/4,
+-export([get/3, list/2, create/3, delete/3, update/4,
          collection_path/2, path/3,
          definition/1]).
 
 -export_type([id/0, definition/0, name/0, resource/0,
              options/0, get_options/0, create_options/0, delete_options/0]).
 
--type id() :: core_v1_namespace. % TODO k8s_model:id().
+%% TODO k8s_model:id()
+-type id() :: core_v1_namespace
+            | core_v1_namespace_list.
 
 -type definition() ::
     #{path_name := binary(),
@@ -38,6 +40,12 @@
 get(Id, Name, Options) ->
   Request = #{method => <<"GET">>,
               target => path(Id, Name, Options)},
+  send_request(Request, Id, Options).
+
+-spec list(id(), get_options()) -> k8s:result(resource()).
+list(Id, Options) ->
+  Request = #{method => <<"GET">>,
+              target => collection_path(Id, Options)},
   send_request(Request, Id, Options).
 
 -spec create(id(), resource(), create_options()) -> k8s:result(resource()).
@@ -132,6 +140,9 @@ path(Id, Name, Options) ->
 
 -spec definition(id()) -> definition().
 definition(core_v1_namespace) ->
+  #{path_name => <<"namespaces">>,
+    global => true};
+definition(core_v1_namespace_list) ->
   #{path_name => <<"namespaces">>,
     global => true};
 definition(Id) ->
