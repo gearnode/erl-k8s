@@ -4,10 +4,7 @@
          collection_path/2, path/3,
          definition/1]).
 
--export_type([id/0, definition/0, name/0, resource/0,
-              options/0, get_options/0, list_options/0, create_options/0,
-              delete_options/0, delete_collection_options/0,
-              update_options/0]).
+-export_type([id/0, definition/0, name/0, resource/0, options/0]).
 
 %% TODO k8s_model:id()
 -type id() :: core_v1_namespace
@@ -26,64 +23,38 @@
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
--type get_options() ::
-        #{context => k8s_config:context_name(),
-          namespace => binary()}.
-
--type list_options() ::
-        #{context => k8s_config:context_name(),
-          namespace => binary()}.
-
--type create_options() ::
-        #{context => k8s_config:context_name(),
-          namespace => binary()}.
-
--type delete_options() ::
-        #{context => k8s_config:context_name(),
-          namespace => binary()}.
-
--type delete_collection_options() ::
-        #{context => k8s_config:context_name(),
-          namespace => binary()}.
-
--type update_options() ::
-        #{context => k8s_config:context_name(),
-          namespace => binary()}.
-
--spec get(id(), name(), get_options()) -> k8s:result(resource()).
+-spec get(id(), name(), options()) -> k8s:result(resource()).
 get(Id, Name, Options) ->
   Request = #{method => <<"GET">>,
               target => path(Id, Name, Options)},
   send_request(Request, Id, Options).
 
--spec list(id(), list_options()) -> k8s:result(resource()).
+-spec list(id(), options()) -> k8s:result(resource()).
 list(Id, Options) ->
   Request = #{method => <<"GET">>,
               target => collection_path(Id, Options)},
   send_request(Request, Id, Options).
 
--spec create(id(), resource(), create_options()) -> k8s:result(resource()).
+-spec create(id(), resource(), options()) -> k8s:result(resource()).
 create(Id, Resource, Options) ->
   Request = #{method => <<"POST">>,
               target => collection_path(Id, Options),
               body => encode_resource(Resource, {ref, k8s, Id})},
   send_request(Request, Id, Options).
 
--spec delete(id(), name(), delete_options()) -> k8s:result(resource()).
+-spec delete(id(), name(), options()) -> k8s:result(resource()).
 delete(Id, Name, Options) ->
   Request = #{method => <<"DELETE">>,
               target => path(Id, Name, Options)},
   send_request(Request, Id, Options).
 
--spec delete_collection(id(), delete_collection_options()) ->
-        k8s:result(resource()).
+-spec delete_collection(id(), options()) -> k8s:result(resource()).
 delete_collection(Id, Options) ->
   Request = #{method => <<"DELETE">>,
               target => collection_path(Id, Options)},
   send_request(Request, Id, Options).
 
--spec update(id(), name(), resource(), update_options()) ->
-        k8s:result(resource()).
+-spec update(id(), name(), resource(), options()) -> k8s:result(resource()).
 update(Id, Name, Resource, Options) ->
   Request = #{method => <<"PUT">>,
               target => path(Id, Name, Options),
