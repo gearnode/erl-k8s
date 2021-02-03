@@ -20,7 +20,7 @@
   0},
  {<<"openapi">>,
   {git,"https://github.com/exograd/erl-openapi.git",
-       {ref,"e86b622c6eb1ccaa3e261a819dc85642d78f6eed"}},
+       {ref,"c1bc6023aec9324764d7fa772c63f323deb58e3a"}},
   0},
  {<<"uri">>,
   {git,"https://github.com/galdor/erl-uri.git",
