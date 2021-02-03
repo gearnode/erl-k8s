@@ -38,37 +38,23 @@
 get(Id, Name, Options) ->
   Request = #{method => <<"GET">>,
               target => path(Id, Name, Options)},
-  RequestOptions = maps:with([context], Options),
-  case k8s_http:send_request(Request, RequestOptions) of
-    {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
-      decode_response_body(Response, {ref, k8s, Id});
-    {ok, Response} ->
-      decode_response_body(Response,
-                           {ref, k8s, apimachinery_apis_meta_v1_status});
-    {error, Reason} ->
-      {error, Reason}
-  end.
+  send_request(Request, Id, Options).
 
 -spec create(id(), resource(), create_options()) -> k8s:result(resource()).
 create(Id, Resource, Options) ->
   Request = #{method => <<"POST">>,
               target => collection_path(Id, Options),
               body => encode_resource(Resource, {ref, k8s, Id})},
-  RequestOptions = maps:with([context], Options),
-  case k8s_http:send_request(Request, RequestOptions) of
-    {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
-      decode_response_body(Response, {ref, k8s, Id});
-    {ok, Response} ->
-      decode_response_body(Response,
-                           {ref, k8s, apimachinery_apis_meta_v1_status});
-    {error, Reason} ->
-      {error, Reason}
-  end.
+  send_request(Request, Id, Options).
 
 -spec delete(id(), name(), delete_options()) -> k8s:result(resource()).
 delete(Id, Name, Options) ->
   Request = #{method => <<"DELETE">>,
               target => path(Id, Name, Options)},
+  send_request(Request, Id, Options).
+
+-spec send_request(mhttp:request(), id(), options()) -> k8s:result(resource()).
+send_request(Request, Id, Options) ->
   RequestOptions = maps:with([context], Options),
   case k8s_http:send_request(Request, RequestOptions) of
     {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
