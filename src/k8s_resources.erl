@@ -1,6 +1,6 @@
 -module(k8s_resources).
 
--export([get/3,
+-export([get/3, create/3,
          collection_path/2, path/3,
          definition/1]).
 
@@ -42,6 +42,31 @@ get(Id, Name, Options) ->
                            {ref, k8s, apimachinery_apis_meta_v1_status});
     {error, Reason} ->
       {error, Reason}
+  end.
+
+-spec create(id(), resource(), create_options()) -> k8s:result(resource()).
+create(Id, Resource, Options) ->
+  Request = #{method => <<"POST">>,
+              target => collection_path(Id, Options),
+              body => encode_resource(Resource, {ref, k8s, Id})},
+  RequestOptions = maps:with([context], Options),
+  case k8s_http:send_request(Request, RequestOptions) of
+    {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
+      decode_response_body(Response, {ref, k8s, Id});
+    {ok, Response} ->
+      decode_response_body(Response,
+                           {ref, k8s, apimachinery_apis_meta_v1_status});
+    {error, Reason} ->
+      {error, Reason}
+  end.
+
+-spec encode_resource(resource(), jsv:definition()) -> iodata().
+encode_resource(Resource, JSVDefinition) ->
+  case jsv:generate(Resource, JSVDefinition) of
+    {ok, Value} ->
+      json:serialize(Value);
+    {error, Reason} ->
+      error({invalid_resource, Reason})
   end.
 
 -spec decode_response_body(mhttp:response(), jsv:definition()) ->
