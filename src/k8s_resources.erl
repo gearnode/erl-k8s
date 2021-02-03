@@ -5,7 +5,8 @@
          definition/1]).
 
 -export_type([id/0, definition/0, name/0, resource/0,
-             options/0, get_options/0, create_options/0, delete_options/0]).
+              options/0, get_options/0, list_options/0, create_options/0,
+              delete_options/0, update_options/0]).
 
 %% TODO k8s_model:id()
 -type id() :: core_v1_namespace
@@ -28,11 +29,19 @@
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
+-type list_options() ::
+        #{context => k8s_config:context_name(),
+          namespace => binary()}.
+
 -type create_options() ::
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
 -type delete_options() ::
+        #{context => k8s_config:context_name(),
+          namespace => binary()}.
+
+-type update_options() ::
         #{context => k8s_config:context_name(),
           namespace => binary()}.
 
@@ -42,7 +51,7 @@ get(Id, Name, Options) ->
               target => path(Id, Name, Options)},
   send_request(Request, Id, Options).
 
--spec list(id(), get_options()) -> k8s:result(resource()).
+-spec list(id(), list_options()) -> k8s:result(resource()).
 list(Id, Options) ->
   Request = #{method => <<"GET">>,
               target => collection_path(Id, Options)},
@@ -61,7 +70,8 @@ delete(Id, Name, Options) ->
               target => path(Id, Name, Options)},
   send_request(Request, Id, Options).
 
--spec update(id(), name(), resource(), create_options()) -> k8s:result(resource()).
+-spec update(id(), name(), resource(), update_options()) ->
+        k8s:result(resource()).
 update(Id, Name, Resource, Options) ->
   Request = #{method => <<"PUT">>,
               target => path(Id, Name, Options),
