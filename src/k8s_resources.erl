@@ -138,5 +138,9 @@ definition(core_v1_namespace) ->
 definition(core_v1_namespace_list) ->
   #{path_name => <<"namespaces">>,
     global => true};
+definition(core_v1_pod) ->
+  #{path_name => <<"pods">>};
+definition(core_v1_pod_list) ->
+  #{path_name => <<"pods">>};
 definition(Id) ->
   error({unknown_resource, Id}).
