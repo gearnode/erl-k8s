@@ -1,5 +1,7 @@
 #!/bin/sh
 
-rm src/k8s_{model,jsv}.erl
+set -eu
+
+rm -f src/k8s_{model,jsv}.erl
 make build
 erl -noshell -pa $(rebar3 path) -s k8s_external generate_openapi_modules
