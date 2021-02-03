@@ -56,7 +56,8 @@ unregister_jsv_catalogs() ->
 
 -spec catalogs() -> [{jsv:catalog_name(), jsv:catalog()}].
 catalogs() ->
-  [{k8s_config, k8s_config:jsv_catalog()}].
+  [{k8s_config, k8s_config:jsv_catalog()},
+   {k8s, k8s_jsv:catalog()}].
 
 -spec start_mhttp_pools(k8s_config:config()) -> ok.
 start_mhttp_pools(Config) ->

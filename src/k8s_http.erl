@@ -176,7 +176,7 @@ send_request(Request, Options) ->
 
 -spec send_request(mhttp:request(), k8s_config:context(),
                    k8s_config:config(), request_options()) ->
-        {ok, mhttp:response()} | {error, term()}.
+        k8s:result(mhttp:response()).
 send_request(Request, #{name := ContextName,
                         cluster := ClusterName},
              Config, _Options) ->
@@ -188,9 +188,16 @@ send_request(Request, #{name := ContextName,
       Target = uri:resolve_reference(TargetRef, TargetBase),
       Header = [{<<"Content-Type">>, <<"application/json">>},
                 {<<"Accept">>, <<"application/json">>}],
-      mhttp:send_request(Request#{target => Target,
-                                  header => Header},
-                         #{pool => PoolId});
+      case
+        mhttp:send_request(Request#{target => Target,
+                                    header => Header},
+                           #{pool => PoolId})
+      of
+        {ok, Response} ->
+          {ok, Response};
+        {error, Reason} ->
+          {error, {request_error, Reason}}
+      end;
     error ->
       {error, {unknown_cluster, ClusterName}}
   end.
