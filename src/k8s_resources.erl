@@ -142,5 +142,13 @@ definition(core_v1_pod) ->
   #{path_name => <<"pods">>};
 definition(core_v1_pod_list) ->
   #{path_name => <<"pods">>};
+definition(batch_v1_job) ->
+  #{path_name => <<"jobs">>,
+    group => <<"batch">>,
+    version => <<"v1">>};
+definition(batch_v1_job_list) ->
+  #{path_name => <<"jobs">>,
+    group => <<"batch">>,
+    version => <<"v1">>};
 definition(Id) ->
   error({unknown_resource, Id}).
