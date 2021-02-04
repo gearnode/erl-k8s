@@ -6,7 +6,6 @@
 
 -export_type([id/0, definition/0, name/0, resource/0, options/0]).
 
-%% TODO k8s_model:id()
 -type id() :: core_v1_namespace
             | core_v1_namespace_list.
 
