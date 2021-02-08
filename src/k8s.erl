@@ -7,6 +7,8 @@
 
 -type error_reason() :: {unknown_context, k8s_config:context_name()}
                       | {request_error, term()} % TODO mhttp:error_reason()
+                      | {request_error, mhttp:status(),
+                         k8s_model:apimachinery_apis_meta_v1_status()}
                       | empty_response_body
                       | {invalid_json_data, json:error()}
                       | {invalid_resource_data, [jsv:value_error()]}.

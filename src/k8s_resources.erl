@@ -66,9 +66,14 @@ send_request(Request, Id, Options) ->
   case k8s_http:send_request(Request, RequestOptions) of
     {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
       decode_response_body(Response, {ref, k8s, Id});
-    {ok, Response} ->
-      decode_response_body(Response,
-                           {ref, k8s, apimachinery_apis_meta_v1_status});
+    {ok, Response = #{status := Status}} ->
+      Definition = {ref, k8s, apimachinery_apis_meta_v1_status},
+      case decode_response_body(Response, Definition) of
+        {ok, StatusData} ->
+          {error, {request_error, Status, StatusData}};
+        {error, Reason} ->
+          {error, Reason}
+      end;
     {error, Reason} ->
       {error, Reason}
   end.
