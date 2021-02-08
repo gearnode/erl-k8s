@@ -16,7 +16,7 @@
       global => boolean()}.
 
 -type name() :: binary().
--type resource() :: #{}.
+-type resource() :: #{atom() := _}.
 
 -type options() ::
         #{context => k8s_config:context_name(),
