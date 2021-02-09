@@ -1,6 +1,7 @@
 -module(k8s_resources).
 
 -export([get/3, list/2, create/3, delete/3, delete_collection/2, update/4,
+         strategic_merge_patch/4,
          collection_path/2, path/3,
          definition/1]).
 
@@ -57,6 +58,16 @@ delete_collection(Id, Options) ->
 update(Id, Name, Resource, Options) ->
   Request = #{method => <<"PUT">>,
               target => path(Id, Name, Options),
+              body => encode_resource(Resource, {ref, k8s, Id})},
+  send_request(Request, Id, Options).
+
+-spec strategic_merge_patch(id(), name(), resource(), options()) ->
+        k8s:result(resource()).
+strategic_merge_patch(Id, Name, Resource, Options) ->
+  ContentType = <<"application/strategic-merge-patch+json">>,
+  Request = #{method => <<"PATCH">>,
+              target => path(Id, Name, Options),
+              header => [{<<"Content-Type">>, ContentType}],
               body => encode_resource(Resource, {ref, k8s, Id})},
   send_request(Request, Id, Options).
 
