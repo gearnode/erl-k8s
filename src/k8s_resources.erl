@@ -93,7 +93,9 @@ send_request(Request, Id, Options) ->
 
 -spec encode_resource(resource(), jsv:definition()) -> iodata().
 encode_resource(Resource, JSVDefinition) ->
-  case jsv:generate(Resource, JSVDefinition) of
+  Options = #{null_member_handling => remove,
+              disable_verification => true},
+  case jsv:generate(Resource, JSVDefinition, Options) of
     {ok, Value} ->
       json:serialize(Value);
     {error, Reason} ->
@@ -109,7 +111,8 @@ decode_response_body(Response, JSVDefinition) ->
     Body ->
       case json:parse(Body) of
         {ok, Value} ->
-          ValidationOptions = #{},
+          ValidationOptions = #{null_member_handling => remove,
+                                disable_verification => true},
           case jsv:validate(Value, JSVDefinition, ValidationOptions) of
             {ok, Resource} ->
               {ok, Resource};
