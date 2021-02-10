@@ -11,9 +11,9 @@
 
 -type error_reason() ::
         kubectl_not_found
-      | {kubectl_signal, Signo :: pos_integer()}
-      | {kubectl_exit, Status :: pos_integer()}
-      | {kubectl_io, PosixCode :: term} % XXX file:posix() ?
+      | {kubectl_signal, Signo :: pos_integer(), Output :: binary()}
+      | {kubectl_exit, Status :: pos_integer(), Output :: binary()}
+      | {kubectl_io, PosixCode :: term, Output :: binary()} % XXX file:posix() ?
       | {invalid_json_data, json:error()}
       | {invalid_data, [jsv:value_error()]}.
 
@@ -181,13 +181,13 @@ read_program_output(Port, Acc) ->
     {Port, {exit_status, 0}} ->
       Acc;
     {Port, {exit_status, Status}} when Status > 128 ->
-      throw({error, {kubectl_signal, Status - 128}});
+      throw({error, {kubectl_signal, Status - 128, Acc}});
     {Port, {exit_status, Status}} ->
-      throw({error, {kubectl_exit, Status}});
+      throw({error, {kubectl_exit, Status, Acc}});
     {Port, {data, Data}} ->
       read_program_output(Port, <<Acc/binary, Data/binary>>);
     {'EXIT', Port, PosixCode} ->
-      throw({error, {kubectl_io, PosixCode}})
+      throw({error, {kubectl_io, PosixCode, Acc}})
   end.
 
 -spec jsv_catalog() -> jsv:catalog().
