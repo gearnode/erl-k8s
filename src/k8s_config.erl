@@ -79,7 +79,7 @@ default_path() ->
   case os:getenv("KUBECONFIG") of
     false ->
       {ok, Dir} = init:get_argument(home),
-      filename:join(Dir, ".kube");
+      filename:join([Dir, ".kube", "config"]);
     Path ->
       Path
   end.
