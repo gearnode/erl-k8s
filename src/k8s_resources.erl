@@ -20,7 +20,9 @@
 
 -type options() ::
         #{context => k8s_config:context_name(),
-          namespace => binary()}.
+          namespace => binary(),
+          label_selector =>
+            k8s_model:apimachinery_apis_meta_v1_label_selector()}.
 
 -spec get(id(), name(), options()) -> k8s:result(resource()).
 get(Id, Name, Options) ->
@@ -71,7 +73,9 @@ strategic_merge_patch(Id, Name, Resource, Options) ->
   send_request(Request, Id, Options).
 
 -spec send_request(mhttp:request(), id(), options()) -> k8s:result(resource()).
-send_request(Request, Id, Options) ->
+send_request(Request0, Id, Options) ->
+  LabelSelector = maps:get(label_selector, Options, #{}),
+  Request = set_request_label_selector(Request0, LabelSelector),
   RequestOptions = maps:with([context], Options),
   case k8s_http:send_request(Request, RequestOptions) of
     {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
@@ -87,6 +91,17 @@ send_request(Request, Id, Options) ->
     {error, Reason} ->
       {error, Reason}
   end.
+
+-spec set_request_label_selector(mhttp:request(), Selector) ->
+        mhttp:request() when
+    Selector :: k8s_model:apimachinery_apis_meta_v1_label_selector().
+set_request_label_selector(Request, Selector) when map_size(Selector) == 0 ->
+  Request;
+set_request_label_selector(Request, Selector) ->
+  SelectorString = k8s_label_selectors:format(Selector),
+  Target = mhttp_request:target_uri(Request),
+  Query = [{<<"labelSelector">>, SelectorString} | uri:query(Target)],
+  Request#{target => Target#{query => Query}}.
 
 -spec encode_resource(resource(), jsv:definition()) -> iodata().
 encode_resource(Resource, JSVDefinition) ->
