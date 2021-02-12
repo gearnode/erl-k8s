@@ -7,10 +7,7 @@
 
 -export_type([id/0, definition/0, name/0, resource/0, options/0]).
 
--type id() :: core_v1_namespace
-            | core_v1_namespace_list
-            | batch_v1_job
-            | batch_v1_job_list.
+-type id() :: k8s_model:definition_id().
 
 -type definition() ::
     #{path_name := binary(),
