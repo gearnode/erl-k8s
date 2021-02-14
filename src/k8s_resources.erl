@@ -160,6 +160,10 @@ path(Id, Name, Options) ->
   <<BasePath/binary, $/, Name/binary>>.
 
 -spec definition(id()) -> definition().
+definition(core_v1_config_map) ->
+  #{path_name => <<"configmaps">>};
+definition(core_v1_config_map_list) ->
+  #{path_name => <<"configmaps">>};
 definition(core_v1_namespace) ->
   #{path_name => <<"namespaces">>};
 definition(core_v1_namespace_list) ->
