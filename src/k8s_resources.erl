@@ -12,8 +12,7 @@
 -type definition() ::
     #{path_name := binary(),
       group => binary(),
-      version => binary(),
-      global => boolean()}.
+      version => binary()}.
 
 -type name() :: binary().
 -type resource() :: #{atom() := _}.
@@ -139,23 +138,20 @@ decode_response_body(Response, JSVDefinition) ->
 -spec collection_path(id(), options()) -> binary().
 collection_path(Id, Options) ->
   Def = definition(Id),
-  BasePath =
-    case maps:find(group, Def) of
-      {ok, Group} ->
-        Version = maps:get(version, Def),
-        ["/apis", Group, Version];
-      error ->
-        ["/api", "v1"]
-    end,
+  BasePath = case maps:find(group, Def) of
+               {ok, Group} ->
+                 Version = maps:get(version, Def),
+                 ["/apis", Group, Version];
+               error ->
+                 ["/api", "v1"]
+             end,
   PathName = maps:get(path_name, Def),
-  Path =
-    case maps:get(global, Def, false) of
-      true ->
-        BasePath ++ [PathName];
-      false ->
-        Namespace = maps:get(namespace, Options),
-        BasePath ++ ["namespaces", Namespace, PathName]
-    end,
+  Path = case maps:find(namespace, Options) of
+           {ok, Namespace} ->
+             BasePath ++ ["namespaces", Namespace, PathName];
+           error ->
+             BasePath ++ [PathName]
+         end,
   iolist_to_binary(lists:join($/, Path)).
 
 -spec path(id(), name(), options()) -> binary().
@@ -165,11 +161,9 @@ path(Id, Name, Options) ->
 
 -spec definition(id()) -> definition().
 definition(core_v1_namespace) ->
-  #{path_name => <<"namespaces">>,
-    global => true};
+  #{path_name => <<"namespaces">>};
 definition(core_v1_namespace_list) ->
-  #{path_name => <<"namespaces">>,
-    global => true};
+  #{path_name => <<"namespaces">>};
 definition(core_v1_pod) ->
   #{path_name => <<"pods">>};
 definition(core_v1_pod_list) ->
