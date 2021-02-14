@@ -44,15 +44,26 @@ create(Id, Resource, Options) ->
 
 -spec delete(id(), name(), options()) -> k8s:result(resource()).
 delete(Id, Name, Options) ->
+  %% Despite what the official documentation says, and what the OpenAPI
+  %% specification for this API describes, successfully deleting a namespace
+  %% will return a namespace object, not a status object. At this point, I do
+  %% not even want to try to understand.
   Request = #{method => <<"DELETE">>,
               target => path(Id, Name, Options)},
-  send_request(Request, {ref, k8s, apimachinery_apis_meta_v1_status}, Options).
+  Definition = case Id of
+                 core_v1_namespace ->
+                   {ref, k8s, core_v1_namespace};
+                 _ ->
+                   {ref, k8s, apimachinery_apis_meta_v1_status}
+               end,
+  send_request(Request, Definition, Options).
 
 -spec delete_collection(id(), options()) -> k8s:result(resource()).
 delete_collection(Id, Options) ->
   Request = #{method => <<"DELETE">>,
               target => collection_path(Id, Options)},
-  send_request(Request, {ref, k8s, apimachinery_apis_meta_v1_status}, Options).
+  Definition = {ref, k8s, apimachinery_apis_meta_v1_status},
+  send_request(Request, Definition, Options).
 
 -spec update(id(), name(), resource(), options()) -> k8s:result(resource()).
 update(Id, Name, Resource, Options) ->
