@@ -46,13 +46,13 @@ create(Id, Resource, Options) ->
 delete(Id, Name, Options) ->
   Request = #{method => <<"DELETE">>,
               target => path(Id, Name, Options)},
-  send_request(Request, Id, Options).
+  send_request(Request, {ref, k8s, apimachinery_apis_meta_v1_status}, Options).
 
 -spec delete_collection(id(), options()) -> k8s:result(resource()).
 delete_collection(Id, Options) ->
   Request = #{method => <<"DELETE">>,
               target => collection_path(Id, Options)},
-  send_request(Request, Id, Options).
+  send_request(Request, {ref, k8s, apimachinery_apis_meta_v1_status}, Options).
 
 -spec update(id(), name(), resource(), options()) -> k8s:result(resource()).
 update(Id, Name, Resource, Options) ->
