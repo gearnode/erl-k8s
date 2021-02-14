@@ -27,20 +27,20 @@
 get(Id, Name, Options) ->
   Request = #{method => <<"GET">>,
               target => path(Id, Name, Options)},
-  send_request(Request, Id, Options).
+  send_request(Request, {ref, k8s, Id}, Options).
 
 -spec list(id(), options()) -> k8s:result(resource()).
 list(Id, Options) ->
   Request = #{method => <<"GET">>,
               target => collection_path(Id, Options)},
-  send_request(Request, Id, Options).
+  send_request(Request, {ref, k8s, Id}, Options).
 
 -spec create(id(), resource(), options()) -> k8s:result(resource()).
 create(Id, Resource, Options) ->
   Request = #{method => <<"POST">>,
               target => collection_path(Id, Options),
               body => encode_resource(Resource, {ref, k8s, Id})},
-  send_request(Request, Id, Options).
+  send_request(Request, {ref, k8s, Id}, Options).
 
 -spec delete(id(), name(), options()) -> k8s:result(resource()).
 delete(Id, Name, Options) ->
@@ -59,7 +59,7 @@ update(Id, Name, Resource, Options) ->
   Request = #{method => <<"PUT">>,
               target => path(Id, Name, Options),
               body => encode_resource(Resource, {ref, k8s, Id})},
-  send_request(Request, Id, Options).
+  send_request(Request, {ref, k8s, Id}, Options).
 
 -spec strategic_merge_patch(id(), name(), resource(), options()) ->
         k8s:result(resource()).
@@ -69,16 +69,17 @@ strategic_merge_patch(Id, Name, Resource, Options) ->
               target => path(Id, Name, Options),
               header => [{<<"Content-Type">>, ContentType}],
               body => encode_resource(Resource, {ref, k8s, Id})},
-  send_request(Request, Id, Options).
+  send_request(Request, {ref, k8s, Id}, Options).
 
--spec send_request(mhttp:request(), id(), options()) -> k8s:result(resource()).
-send_request(Request0, Id, Options) ->
+-spec send_request(mhttp:request(), jsv:definition(), options()) ->
+        k8s:result(resource()).
+send_request(Request0, Definition, Options) ->
   LabelSelector = maps:get(label_selector, Options, #{}),
   Request = set_request_label_selector(Request0, LabelSelector),
   RequestOptions = maps:with([context], Options),
   case k8s_http:send_request(Request, RequestOptions) of
     {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
-      decode_response_body(Response, {ref, k8s, Id});
+      decode_response_body(Response, Definition);
     {ok, Response = #{status := Status}} ->
       Definition = {ref, k8s, apimachinery_apis_meta_v1_status},
       case decode_response_body(Response, Definition) of
