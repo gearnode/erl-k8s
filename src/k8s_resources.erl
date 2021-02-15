@@ -21,7 +21,8 @@
         #{context => k8s_config:context_name(),
           namespace => binary(),
           label_selector =>
-            k8s_model:apimachinery_apis_meta_v1_label_selector()}.
+            k8s_model:apimachinery_apis_meta_v1_label_selector(),
+          field_manager => binary()}.
 
 -spec get(id(), name(), options()) -> k8s:result(resource()).
 get(Id, Name, Options) ->
@@ -74,8 +75,9 @@ strategic_merge_patch(Id, Name, Resource, Options) ->
 -spec send_request(mhttp:request(), id(), options()) ->
         k8s:result(resource()).
 send_request(Request0, Id, Options) ->
-  LabelSelector = maps:get(label_selector, Options, #{}),
-  Request = set_request_label_selector(Request0, LabelSelector),
+  Request = lists:foldl(fun (F, Req) -> F(Req, Options) end,
+                        Request0, [fun set_request_label_selector/2,
+                                   fun set_request_field_manager/2]),
   RequestOptions = maps:with([context], Options),
   case k8s_http:send_request(Request, RequestOptions) of
     {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
@@ -93,16 +95,34 @@ send_request(Request0, Id, Options) ->
       {error, Reason}
   end.
 
--spec set_request_label_selector(mhttp:request(), Selector) ->
-        mhttp:request() when
-    Selector :: k8s_model:apimachinery_apis_meta_v1_label_selector().
-set_request_label_selector(Request, Selector) when map_size(Selector) == 0 ->
+-spec set_request_label_selector(mhttp:request(), options()) ->
+        mhttp:request().
+set_request_label_selector(Request, #{label_selector := Selector}) when
+    map_size(Selector) == 0 ->
   Request;
-set_request_label_selector(Request, Selector) ->
+set_request_label_selector(Request, #{label_selector := Selector}) ->
   SelectorString = k8s_label_selectors:format(Selector),
   Target = mhttp_request:target_uri(Request),
   Query = [{<<"labelSelector">>, SelectorString} | uri:query(Target)],
-  Request#{target => Target#{query => Query}}.
+  Request#{target => Target#{query => Query}};
+set_request_label_selector(Request, _) ->
+  Request.
+
+-spec set_request_field_manager(mhttp:request(), options()) ->
+        mhttp:request().
+set_request_field_manager(Request, #{field_manager := FieldManager}) ->
+  Target = mhttp_request:target_uri(Request),
+  Query = [{<<"fieldManager">>, FieldManager} | uri:query(Target)],
+  Request#{target => Target#{query => Query}};
+set_request_field_manager(Request, Options) ->
+  K8sOptions = persistent_term:get(k8s_options),
+  case maps:find(field_manager, K8sOptions) of
+    {ok, FieldManager} ->
+      set_request_field_manager(Request,
+                                Options#{field_manager => FieldManager});
+    error ->
+      Request
+  end.
 
 -spec encode_resource(resource(), jsv:definition()) -> iodata().
 encode_resource(Resource, JSVDefinition) ->

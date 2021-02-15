@@ -4,9 +4,14 @@
 
 -export([start/2, stop/1]).
 
+-type options() ::
+        #{field_manager => binary()}.
+
 start(_StartType, _Args) ->
   try
     register_jsv_catalogs(),
+    Options = application:get_env(k8s, options, #{}),
+    persistent_term:put(k8s_options, Options),
     Config = load_config(),
     persistent_term:put(k8s_config, Config),
     start_mhttp_pools(Config),
