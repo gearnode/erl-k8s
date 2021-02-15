@@ -92,8 +92,8 @@ send_request(Request0, Definition, Options) ->
     {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
       decode_response_body(Response, Definition);
     {ok, Response = #{status := Status}} ->
-      Definition = {ref, k8s, apimachinery_apis_meta_v1_status},
-      case decode_response_body(Response, Definition) of
+      Definition2 = {ref, k8s, apimachinery_apis_meta_v1_status},
+      case decode_response_body(Response, Definition2) of
         {ok, StatusData} ->
           {error, {request_error, Status, StatusData}};
         {error, Reason} ->
