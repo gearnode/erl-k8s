@@ -27,50 +27,39 @@
 get(Id, Name, Options) ->
   Request = #{method => <<"GET">>,
               target => path(Id, Name, Options)},
-  send_request(Request, {ref, k8s, Id}, Options).
+  send_request(Request, Id, Options).
 
 -spec list(id(), options()) -> k8s:result(resource()).
 list(Id, Options) ->
   Request = #{method => <<"GET">>,
               target => collection_path(Id, Options)},
-  send_request(Request, {ref, k8s, Id}, Options).
+  send_request(Request, Id, Options).
 
 -spec create(id(), resource(), options()) -> k8s:result(resource()).
 create(Id, Resource, Options) ->
   Request = #{method => <<"POST">>,
               target => collection_path(Id, Options),
               body => encode_resource(Resource, {ref, k8s, Id})},
-  send_request(Request, {ref, k8s, Id}, Options).
+  send_request(Request, Id, Options).
 
 -spec delete(id(), name(), options()) -> k8s:result(resource()).
 delete(Id, Name, Options) ->
-  %% Despite what the official documentation says, and what the OpenAPI
-  %% specification for this API describes, successfully deleting a namespace
-  %% will return a namespace object, not a status object. At this point, I do
-  %% not even want to try to understand.
   Request = #{method => <<"DELETE">>,
               target => path(Id, Name, Options)},
-  Definition = case Id of
-                 core_v1_namespace ->
-                   {ref, k8s, core_v1_namespace};
-                 _ ->
-                   {ref, k8s, apimachinery_apis_meta_v1_status}
-               end,
-  send_request(Request, Definition, Options).
+  send_request(Request, delete_response_id(Id), Options).
 
 -spec delete_collection(id(), options()) -> k8s:result(resource()).
 delete_collection(Id, Options) ->
   Request = #{method => <<"DELETE">>,
               target => collection_path(Id, Options)},
-  Definition = {ref, k8s, apimachinery_apis_meta_v1_status},
-  send_request(Request, Definition, Options).
+  send_request(Request, apimachinery_apis_meta_v1_status, Options).
 
 -spec update(id(), name(), resource(), options()) -> k8s:result(resource()).
 update(Id, Name, Resource, Options) ->
   Request = #{method => <<"PUT">>,
               target => path(Id, Name, Options),
               body => encode_resource(Resource, {ref, k8s, Id})},
-  send_request(Request, {ref, k8s, Id}, Options).
+  send_request(Request, Id, Options).
 
 -spec strategic_merge_patch(id(), name(), resource(), options()) ->
         k8s:result(resource()).
@@ -80,20 +69,21 @@ strategic_merge_patch(Id, Name, Resource, Options) ->
               target => path(Id, Name, Options),
               header => [{<<"Content-Type">>, ContentType}],
               body => encode_resource(Resource, {ref, k8s, Id})},
-  send_request(Request, {ref, k8s, Id}, Options).
+  send_request(Request, Id, Options).
 
--spec send_request(mhttp:request(), jsv:definition(), options()) ->
+-spec send_request(mhttp:request(), id(), options()) ->
         k8s:result(resource()).
-send_request(Request0, Definition, Options) ->
+send_request(Request0, Id, Options) ->
   LabelSelector = maps:get(label_selector, Options, #{}),
   Request = set_request_label_selector(Request0, LabelSelector),
   RequestOptions = maps:with([context], Options),
   case k8s_http:send_request(Request, RequestOptions) of
     {ok, Response = #{status := Status}} when Status >= 200, Status < 300 ->
+      Definition = {ref, k8s, Id},
       decode_response_body(Response, Definition);
     {ok, Response = #{status := Status}} ->
-      Definition2 = {ref, k8s, apimachinery_apis_meta_v1_status},
-      case decode_response_body(Response, Definition2) of
+      Definition = {ref, k8s, apimachinery_apis_meta_v1_status},
+      case decode_response_body(Response, Definition) of
         {ok, StatusData} ->
           {error, {request_error, Status, StatusData}};
         {error, Reason} ->
@@ -197,3 +187,35 @@ definition(batch_v1_job_list) ->
     version => <<"v1">>};
 definition(Id) ->
   error({unknown_resource, Id}).
+
+-spec delete_response_id(id()) -> id().
+delete_response_id(Id) ->
+  %% The API is inconsistent: deleting a resource usually yields a Status
+  %% object, but not always.
+  %%
+  %% Additionally, even though the OpenAPI specification indicates that
+  %% deleting a namespace should yield a Status object, it does not and yield
+  %% a Namespace object.
+  Ids = [core_v1_namespace,
+         core_v1_persistent_volume_claim,
+         core_v1_pod,
+         core_v1_pod_template,
+         core_v1_resource_quota,
+         core_v1_service_account,
+         core_v1_persistent_volume,
+         policy_v1beta1_pod_security_policy,
+         storage_v1_csi_driver,
+         storage_v1_csi_node,
+         storage_v1_storage_class,
+         storage_v1_volume_attachment,
+         storage_v1alpha1_volume_attachment,
+         storage_v1beta1_csi_driver,
+         storage_v1beta1_csi_node,
+         storage_v1beta1_storage_class,
+         storage_v1beta1_volume_attachment],
+  case lists:member(Id, Ids) of
+    true ->
+      Id;
+    false ->
+      apimachinery_apis_meta_v1_status
+  end.
