@@ -132,6 +132,7 @@ decode_response_body(Response, JSVDefinition) ->
     <<>> ->
       {error, empty_response_body};
     Body ->
+      Status = mhttp_response:status(Response),
       case json:parse(Body) of
         {ok, Value} ->
           ValidationOptions = #{null_member_handling => remove,
@@ -140,10 +141,12 @@ decode_response_body(Response, JSVDefinition) ->
             {ok, Resource} ->
               {ok, Resource};
             {error, Errors} ->
-              {error, {invalid_resource_data, Errors}}
+              {error, {invalid_response_body, Status,
+                       {invalid_resource_data, Errors}}}
           end;
         {error, Reason} ->
-          {error, {invalid_json_data, Reason}}
+          {error, {invalid_response_body, Status,
+                   {invalid_json_data, Reason}}}
       end
   end.
 

@@ -10,5 +10,6 @@
                       | {request_error, mhttp:status(),
                          k8s_model:apimachinery_apis_meta_v1_status()}
                       | empty_response_body
-                      | {invalid_json_data, json:error()}
-                      | {invalid_resource_data, [jsv:value_error()]}.
+                      | {invalid_response_body, mhttp:status(),
+                         {invalid_json_data, json:error()} |
+                         {invalid_resource_data, [jsv:value_error()]}}.
