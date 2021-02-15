@@ -4,6 +4,8 @@
 
 -export([start/2, stop/1]).
 
+-export_type([options/0]).
+
 -type options() ::
         #{field_manager => binary()}.
 
