@@ -16,7 +16,7 @@
   1},
  {<<"mhttp">>,
   {git,"https://github.com/galdor/erl-mhttp.git",
-       {ref,"5d9bca82f9f400033240669c565cae50f5b6dc0f"}},
+       {ref,"2ed9904af30afce3932788f0736f7df8e2514a0d"}},
   0},
  {<<"openapi">>,
   {git,"https://github.com/exograd/erl-openapi.git",

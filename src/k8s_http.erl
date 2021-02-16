@@ -76,32 +76,38 @@ pool_options(Config, Cluster, User) ->
                      k8s_config:user()) ->
         mhttp_client:options().
 client_options(_Config, Cluster, User) ->
-  ConnectOptions0 = [{verify, verify_peer}],
-  ConnectOptions1 =
-    maps:fold(fun
-                (tls_server_name, Value, Acc) ->
-                  [{server_name_indication, binary_to_list(Value)} | Acc];
-                (insecure_skip_tls_verify, _, Acc) ->
-                  [{verify, verify_none} | lists:keydelete(verify, 1, Acc)];
-                (certificate_authority_data, Value, Acc) ->
-                  [{cacerts, read_certificates(Value)} | Acc];
-                (proxy_url, _, _) ->
-                  throw({unsupported_cluster_setting, proxy_url});
-                (_, _, Acc) ->
-                 Acc
-             end, ConnectOptions0, Cluster),
-  ConnectOptions2 =
-    maps:fold(fun
-                (client_certificate_data, Value, Acc) ->
-                  [{cert, read_certificates(Value)} | Acc];
-                (client_key_data, Value, Acc) ->
-                  [{key, read_private_key(Value)} | Acc];
-                (_, _, Acc) ->
-                  Acc
-             end, ConnectOptions1, User),
-  #{connect_options => ConnectOptions2,
+  TLSOptions0 = [{verify, verify_peer}],
+  TLSOptions1 = maps:fold(fun update_tls_options_from_cluster/3,
+                          TLSOptions0, Cluster),
+  TLSOptions2 = maps:fold(fun update_tls_options_from_user/3,
+                          TLSOptions1, User),
+  #{tls_options => TLSOptions2,
     compression => true,
     log_requests => true}.
+
+-spec update_tls_options_from_cluster(atom(), any(), [Option]) ->
+        [Option] when
+    Option :: mhttp_client:tls_option().
+update_tls_options_from_cluster(tls_server_name, Name, Options) ->
+  [{server_name_indication, binary_to_list(Name)} | Options];
+update_tls_options_from_cluster(insecure_skip_tls_verify, true, Options) ->
+  [{verify, verify_none} | lists:keydelete(verify, 1, Options)];
+update_tls_options_from_cluster(certificate_authority_data, Data, Options) ->
+  [{cacerts, read_certificates(Data)} | Options];
+update_tls_options_from_cluster(proxy_url, _, _Options) ->
+  throw({unsupported_cluster_setting, proxy_url});
+update_tls_options_from_cluster(_, _, Options) ->
+  Options.
+
+-spec update_tls_options_from_user(atom(), any(), [Option]) ->
+        [Option] when
+    Option :: mhttp_client:tls_option().
+update_tls_options_from_user(client_certificate_data, Data, Options) ->
+  [{cert, read_certificates(Data)} | Options];
+update_tls_options_from_user(client_key_data, Data, Options) ->
+  [{key, read_private_key(Data)} | Options];
+update_tls_options_from_user(_, _, Options) ->
+  Options.
 
 -spec read_certificates(binary()) -> [public_key:der_encoded()].
 read_certificates(Base64Data) ->
