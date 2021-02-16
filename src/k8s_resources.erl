@@ -2,6 +2,7 @@
 
 -export([get/3, list/2, create/3, delete/3, delete_collection/2, update/4,
          strategic_merge_patch/4,
+         decode_response_body/2,
          collection_path/2, path/3,
          definition/1]).
 
