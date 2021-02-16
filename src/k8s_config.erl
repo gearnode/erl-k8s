@@ -117,7 +117,7 @@ read(Data) ->
 -spec read_value(json:value()) -> config().
 read_value(Value) ->
   Options = #{disable_verification => true,
-              invalid_member_handling => keep,
+              unknown_member_handling => keep,
               null_member_handling => remove},
   case jsv:validate(Value, {ref, k8s_config, config}, Options) of
     {ok, ConfigData0} ->
