@@ -13,7 +13,7 @@
         kubectl_not_found
       | {kubectl_signal, Signo :: pos_integer(), Output :: binary()}
       | {kubectl_exit, Status :: pos_integer(), Output :: binary()}
-      | {kubectl_io, PosixCode :: term, Output :: binary()} % XXX file:posix() ?
+      | {kubectl_io, PosixCode :: term(), Output :: binary()} % XXX file:posix() ?
       | {invalid_json_data, json:error()}
       | {invalid_data, [jsv:value_error()]}.
 
