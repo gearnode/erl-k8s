@@ -8,7 +8,7 @@
   0},
  {<<"jsv">>,
   {git,"https://github.com/galdor/erl-jsv.git",
-       {ref,"2629b643f7bc9566d0c3a3a9aa6504f493273c5a"}},
+       {ref,"d46c4ff1fc3637738a282c8a1eb63b3e511dacda"}},
   0},
  {<<"ksuid">>,
   {git,"https://github.com/exograd/erl-ksuid.git",
@@ -16,7 +16,7 @@
   1},
  {<<"mhttp">>,
   {git,"https://github.com/galdor/erl-mhttp.git",
-       {ref,"2ed9904af30afce3932788f0736f7df8e2514a0d"}},
+       {ref,"b6e9027ed7b6a32da3e62ce8e3e763aaba1e9a8d"}},
   0},
  {<<"openapi">>,
   {git,"https://github.com/exograd/erl-openapi.git",
@@ -29,4 +29,8 @@
  {<<"uuid">>,
   {git,"https://github.com/galdor/erl-uuid.git",
        {ref,"a3e876ed2fe46d04891574caf18bc49350b1a578"}},
-  1}].
+  1},
+ {<<"yaml">>,
+  {git,"https://github.com/exograd/erl-yaml.git",
+       {ref,"9f3bc7e6e5af9d71dfddfac086a410f767c075cd"}},
+  0}].

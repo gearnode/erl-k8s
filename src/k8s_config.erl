@@ -10,11 +10,9 @@
               context_name/0, context/0]).
 
 -type error_reason() ::
-        kubectl_not_found
-      | {kubectl_signal, Signo :: pos_integer(), Output :: binary()}
-      | {kubectl_exit, Status :: pos_integer(), Output :: binary()}
-      | {kubectl_io, PosixCode :: term(), Output :: binary()} % XXX file:posix() ?
-      | {invalid_json_data, json:error()}
+        empty_yaml_document
+      | multiple_yaml_documents
+      | {invalid_yaml_data, json:error()}
       | {invalid_data, [jsv:value_error()]}.
 
 %% See
@@ -90,31 +88,27 @@ load() ->
 
 -spec load(file:name_all()) -> {ok, config()} | {error, error_reason()}.
 load(ConfigPath) ->
-  case os:find_executable("kubectl") of
-    false ->
-      {error, kubectl_not_found};
-    KubectlPath ->
-      Args = ["kubectl", "config", "view", "--kubeconfig", ConfigPath,
-              "--raw", "-o", "json"],
-      try
-        Data = exec_program(KubectlPath, Args),
-        {ok, read(Data)}
-      catch
-        throw:{error, Reason} ->
-          {error, Reason}
-      end
-  end.
-
--spec read(binary()) -> config().
-read(Data) ->
-  case json:parse(Data) of
-    {ok, Value} ->
-      read_value(Value);
+  case file:read_file(ConfigPath) of
+    {ok, Data} ->
+      read(Data);
     {error, Reason} ->
-      throw({error, {invalid_json_data, Reason}})
+      {error, Reason}
   end.
 
--spec read_value(json:value()) -> config().
+-spec read(binary()) -> {ok, config()} | {error, error_reason()}.
+read(Data) ->
+  case yaml_json:parse(Data) of
+    {ok, []} ->
+      {error, empty_yaml_document};
+    {ok, [Value]} ->
+      read_value(Value);
+    {ok, _} ->
+      {error, multiple_yaml_documents};
+    {error, Reason} ->
+      {error, {invalid_yaml_data, Reason}}
+  end.
+
+-spec read_value(json:value()) -> {ok, config()} | {error, error_reason()}.
 read_value(Value) ->
   Options = #{disable_verification => true,
               unknown_member_handling => keep,
@@ -125,12 +119,13 @@ read_value(Value) ->
       Items = fun (Key, ItemName) ->
                   extract_named_items(maps:get(Key, ConfigData, []), ItemName)
               end,
-      Config = #{clusters => Items(clusters, cluster),
-                 users => Items(users, user),
-                 contexts => Items(contexts, context)},
-      maps:merge(Config, maps:with([current_context], ConfigData));
+      Config0 = #{clusters => Items(clusters, cluster),
+                  users => Items(users, user),
+                  contexts => Items(contexts, context)},
+      Config = maps:merge(Config0, maps:with([current_context], ConfigData)),
+      {ok, Config};
     {error, Reason} ->
-      throw({error, {invalid_data, Reason}})
+      {error, {invalid_data, Reason}}
   end.
 
 -spec extract_named_items(json:array(), ItemName :: atom()) -> map().
@@ -156,40 +151,6 @@ normalize_key(Key) when is_atom(Key) ->
   binary_to_atom(list_to_binary(Bin2));
 normalize_key(Key) when is_binary(Key) ->
   Key.
-
--spec exec_program(file:name_all(), [string() | binary()]) -> binary().
-exec_program(Path, [Arg0 | Args]) ->
-  %% Note that open_port/2 throws an exception when it fails
-  Options = [{arg0, Arg0}, {args, Args},
-             stderr_to_stdout, exit_status, binary],
-  try
-    Port = open_port({spawn_executable, Path}, Options),
-    try
-      read_program_output(Port, <<>>)
-    after
-      catch port_close(Port)
-    end
-  catch
-    throw:{error, Reason} ->
-      throw({error, Reason});
-    throw:Error ->
-      throw({error, Error})
-  end.
-
--spec read_program_output(port(), binary()) -> binary().
-read_program_output(Port, Acc) ->
-  receive
-    {Port, {exit_status, 0}} ->
-      Acc;
-    {Port, {exit_status, Status}} when Status > 128 ->
-      throw({error, {kubectl_signal, Status - 128, Acc}});
-    {Port, {exit_status, Status}} ->
-      throw({error, {kubectl_exit, Status, Acc}});
-    {Port, {data, Data}} ->
-      read_program_output(Port, <<Acc/binary, Data/binary>>);
-    {'EXIT', Port, PosixCode} ->
-      throw({error, {kubectl_io, PosixCode, Acc}})
-  end.
 
 -spec jsv_catalog() -> jsv:catalog().
 jsv_catalog() ->

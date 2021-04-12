@@ -11,6 +11,7 @@
     mhttp,
     json,
     jsv,
+    yaml,
     openapi]},
   {env, []},
   {modules, []}]}.
