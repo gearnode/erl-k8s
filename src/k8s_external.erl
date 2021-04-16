@@ -13,5 +13,7 @@ generate_openapi_modules() ->
     ok ->
       halt(0);
     {error, Reason} ->
-      error(Reason)
+      io:format(standard_error, "cannot generate modules from ~ts:~n~tp~n",
+                [SpecPath, Reason]),
+      halt(1)
   end.
