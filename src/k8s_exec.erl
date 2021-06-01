@@ -4,7 +4,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/2, start_link/3]).
+-export([start_link/2, start_link/3, stop/1]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2, handle_info/2]).
 
 -export_type([pod_name/0, command/0,
@@ -50,6 +50,10 @@ start_link(Pod, Command, Options0) ->
               false -> Options0#{event_target => self()}
             end,
   gen_server:start_link(?MODULE, [Pod, Command, Options], []).
+
+-spec stop(ref()) -> ok.
+stop(Ref) ->
+  gen_server:stop(Ref).
 
 -spec init(list()) -> et_gen_server:init_ret(state()).
 init([Pod, Command, Options]) ->
