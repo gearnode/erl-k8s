@@ -8,21 +8,28 @@
 -export([init/1, terminate/2, handle_call/3, handle_cast/2, handle_info/2]).
 
 -export_type([pod_name/0, command/0,
-              message/0,
+              message/0, event_message/0, event/0,
               ref/0, options/0]).
 
 -type pod_name() :: binary().
 -type command() :: [binary()].
 
+-type event_message() :: {k8s_exec, event()}.
+
+-type event() ::
+        {message, message()}
+      | finished.
+
 -type message() ::
         {stdout, binary()}
       | {stderr, binary()}
-      | {control, binary()}.
+      | {error, binary()}.
 
 -type ref() :: et_gen_server:ref().
 
 -type options() ::
-        #{context => k8s_config:context_name(),
+        #{event_target => pid() | atom(),
+          context => k8s_config:context_name(),
           namespace => binary(),
           container => binary()}.
 
@@ -37,7 +44,11 @@ start_link(Pod, Command) ->
 
 -spec start_link(pod_name(), command(), options()) ->
         {ok, pid()} | {error, term()}.
-start_link(Pod, Command, Options) ->
+start_link(Pod, Command, Options0) ->
+  Options = case maps:is_key(event_target, Options0) of
+              true -> Options0;
+              false -> Options0#{event_target => self()}
+            end,
   gen_server:start_link(?MODULE, [Pod, Command, Options], []).
 
 -spec init(list()) -> et_gen_server:init_ret(state()).
@@ -76,6 +87,7 @@ handle_cast(Msg, State) ->
 -spec handle_info(term(), state()) -> et_gen_server:handle_info_ret(state()).
 handle_info({websocket, connected}, State) ->
   ?LOG_DEBUG("connection established"),
+  send_event(finished, State),
   {noreply, State};
 handle_info({websocket, terminating}, State) ->
   ?LOG_DEBUG("connection closed"),
@@ -87,8 +99,7 @@ handle_info({websocket, {message, {data, _, Data}}}, State) ->
       %% time being.
       {noreply, State};
     {ok, Message} ->
-      ?LOG_DEBUG("message: ~0tp", [Message]),
-      %% TODO
+      send_event({message, Message}, State),
       {noreply, State};
     {error, Reason} ->
       ?LOG_ERROR("invalid message: ~tp", [Data]),
@@ -97,6 +108,13 @@ handle_info({websocket, {message, {data, _, Data}}}, State) ->
 handle_info(Msg, State) ->
   ?LOG_WARNING("unhandled info ~p", [Msg]),
   {noreply, State}.
+
+-spec send_event(event(), state()) -> ok.
+send_event(Event, #{options := #{event_target := Target}}) ->
+  Target ! {k8s_exec, Event},
+  ok;
+send_event(_, _) ->
+  ok.
 
 -spec connect(pod_name(), command(), options()) ->
         {ok, pid()} | {error, term()}.
@@ -134,7 +152,7 @@ parse_message(<<1:8, Data/binary>>) ->
 parse_message(<<2:8, Data/binary>>) ->
   {ok, {stderr, Data}};
 parse_message(<<3:8, Data/binary>>) ->
-  {ok, {control, Data}};
+  {ok, {error, Data}};
 parse_message(Data) ->
   {error, {invalid_exec_message, Data}}.
 
