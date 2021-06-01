@@ -134,7 +134,9 @@ connect(Pod, Command, Options) ->
 
 -spec uri(pod_name(), command(), options()) -> uri:uri().
 uri(Pod, Command, Options) ->
-  ResourceOptions = maps:with([context, namespace], Options),
+  Namespace = maps:get(namespace, Options, <<"default">>),
+  ResourceOptions0 = maps:with([context], Options),
+  ResourceOptions = ResourceOptions0#{namespace => Namespace},
   BasePath = k8s_resources:path(core_v1_pod, Pod, ResourceOptions),
   Path = <<BasePath/binary, "/exec">>,
   Query1 = [{<<"stdout">>, <<"true">>},
