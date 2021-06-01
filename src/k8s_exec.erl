@@ -7,23 +7,29 @@
 -export([start_link/2, start_link/3]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2, handle_info/2]).
 
--export_type([pod_name/0, command/0, ref/0, options/0]).
+-export_type([pod_name/0, command/0,
+              message/0,
+              ref/0, options/0]).
 
 -type pod_name() :: binary().
-
 -type command() :: [binary()].
 
--type ref() :: et_gen_server:ref().
+-type message() ::
+        {stdout, binary()}
+      | {stderr, binary()}
+      | {control, binary()}.
 
--type state() :: #{options := options(),
-                   pod := pod_name(),
-                   command := command(),
-                   websocket_client := pid()}.
+-type ref() :: et_gen_server:ref().
 
 -type options() ::
         #{context => k8s_config:context_name(),
           namespace => binary(),
           container => binary()}.
+
+-type state() :: #{options := options(),
+                   pod := pod_name(),
+                   command := command(),
+                   websocket_client := pid()}.
 
 -spec start_link(pod_name(), command()) -> {ok, pid()} | {error, term()}.
 start_link(Pod, Command) ->
@@ -75,9 +81,19 @@ handle_info({websocket, terminating}, State) ->
   ?LOG_DEBUG("connection closed"),
   {stop, normal, State};
 handle_info({websocket, {message, {data, _, Data}}}, State) ->
-  %% TODO
-  ?LOG_DEBUG("data: ~0tp~n", [Data]),
-  {noreply, State};
+  case parse_message(Data) of
+    {ok, {_, <<"">>}} ->
+      %% The point of these empty messages is unknown; we skip them for the
+      %% time being.
+      {noreply, State};
+    {ok, Message} ->
+      ?LOG_DEBUG("message: ~0tp", [Message]),
+      %% TODO
+      {noreply, State};
+    {error, Reason} ->
+      ?LOG_ERROR("invalid message: ~tp", [Data]),
+      {stop, {error, Reason}, State}
+  end;
 handle_info(Msg, State) ->
   ?LOG_WARNING("unhandled info ~p", [Msg]),
   {noreply, State}.
@@ -111,3 +127,14 @@ uri(Pod, Command, Options) ->
            end,
   Query = Query1 ++ Query2 ++ [{<<"command">>, Part} || Part <- Command],
   #{path => Path, query => Query}.
+
+-spec parse_message(binary()) -> k8s:result(message()).
+parse_message(<<1:8, Data/binary>>) ->
+  {ok, {stdout, Data}};
+parse_message(<<2:8, Data/binary>>) ->
+  {ok, {stderr, Data}};
+parse_message(<<3:8, Data/binary>>) ->
+  {ok, {control, Data}};
+parse_message(Data) ->
+  {error, {invalid_exec_message, Data}}.
+
