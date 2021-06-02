@@ -4,13 +4,14 @@
 
 resources_test_() ->
   {setup,
-   fun() ->
+   fun () ->
        {ok, _} = application:ensure_all_started(k8s),
        ok
    end,
-   fun(_) ->
+   fun (_) ->
        error_logger:tty(false),
        ok = application:stop(k8s),
+       ok = application:stop(mhttp),
        error_logger:tty(true)
    end,
    [fun basic_workflow/0]}.

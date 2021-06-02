@@ -4,7 +4,8 @@
 
 -behaviour(gen_server).
 
--export([start_link/2, start_link/3, stop/1]).
+-export([start_link/2, start_link/3, stop/1,
+         receive_messages/0]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2, handle_info/2]).
 
 -export_type([pod_name/0, command/0,
@@ -18,7 +19,7 @@
 
 -type event() ::
         {message, message()}
-      | finished.
+      | terminated.
 
 -type message() ::
         {stdout, binary()}
@@ -55,6 +56,23 @@ start_link(Pod, Command, Options0) ->
 stop(Ref) ->
   gen_server:stop(Ref).
 
+-spec receive_messages() ->
+        {ok, Messages} | {error, term(), Messages} when
+    Messages :: [message()].
+receive_messages() ->
+  receive_messages([]).
+
+-spec receive_messages(Messages) ->
+        {ok, Messages} | {error, term(), Messages} when
+    Messages :: [message()].
+receive_messages(Messages) ->
+  receive
+    {k8s_exec, {message, Message}} ->
+      receive_messages([Message | Messages]);
+    {k8s_exec, terminated} ->
+      lists:reverse(Messages)
+  end.
+
 -spec init(list()) -> et_gen_server:init_ret(state()).
 init([Pod, Command, Options]) ->
   Namespace = maps:get(namespace, Options, <<"default">>),
@@ -75,6 +93,7 @@ init([Pod, Command, Options]) ->
 
 -spec terminate(et_gen_server:terminate_reason(), state()) -> ok.
 terminate(_Reason, _State) ->
+  %% TODO stop the websocket process if it still exists
   ok.
 
 -spec handle_call(term(), {pid(), et_gen_server:request_id()}, state()) ->
@@ -91,10 +110,10 @@ handle_cast(Msg, State) ->
 -spec handle_info(term(), state()) -> et_gen_server:handle_info_ret(state()).
 handle_info({websocket, connected}, State) ->
   ?LOG_DEBUG("connection established"),
-  send_event(finished, State),
   {noreply, State};
 handle_info({websocket, terminating}, State) ->
   ?LOG_DEBUG("connection closed"),
+  send_event(terminated, State),
   {stop, normal, State};
 handle_info({websocket, {message, {data, _, Data}}}, State) ->
   case parse_message(Data) of
@@ -171,4 +190,3 @@ parse_message(<<3:8, Data/binary>>) ->
   {ok, {error, Data}};
 parse_message(Data) ->
   {error, {invalid_exec_message, Data}}.
-
