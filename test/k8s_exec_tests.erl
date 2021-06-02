@@ -25,7 +25,9 @@ exec_test_() ->
           fun mixed_stdout_stderr/1,
           fun interruption/1,
           fun unknown_pod/1,
-          fun unknown_program/1]}}
+          fun unknown_program/1,
+          fun program_failure/1,
+          fun program_killed/1]}}
    end}.
 
 stdout_only(PodName) ->
@@ -56,15 +58,33 @@ unknown_pod(_PodName) ->
   %% TODO Check the status object (third value in the error tuple) once we add
   %% support for exec response decoding.
   Command = [<<"uname">>],
-  {error, {exec_error, 404, _}} =
-    k8s_exec:start(<<"does_not_exist">>, Command, #{}).
+  ?assertMatch({error, {exec_error, 404, _}},
+                 k8s_exec:start(<<"does_not_exist">>, Command, #{})).
 
 unknown_program(PodName) ->
   %% TODO Check the error object (second value in the error tuple) once we add
   %% support for error parsing.
   Command = [<<"does_not_exist">>],
   {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
-  ?assertEqual({ok, [{error, _}]},
+  ?assertMatch({ok, [{error, _}]},
+               k8s_exec:receive_messages(1000)),
+  ?assertNot(is_process_alive(Pid)).
+
+program_failure(PodName) ->
+  %% TODO Check the error object (second value in the error tuple) once we add
+  %% support for error parsing.
+  Command = [<<"sh">>, <<"-c">>, <<"exit 42">>],
+  {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
+  ?assertMatch({ok, [{error, _}]},
+               k8s_exec:receive_messages(1000)),
+  ?assertNot(is_process_alive(Pid)).
+
+program_killed(PodName) ->
+  %% TODO Check the error object (second value in the error tuple) once we add
+  %% support for error parsing.
+  Command = [<<"sh">>, <<"-c">>, <<"kill -9 0">>],
+  {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
+  ?assertMatch({ok, [{error, _}]},
                k8s_exec:receive_messages(1000)),
   ?assertNot(is_process_alive(Pid)).
 
