@@ -22,23 +22,51 @@ exec_test_() ->
        {timeout, 600,
         {with, PodName,
          [fun stdout_only/1,
-          fun mixed_stdout_stderr/1]}}
+          fun mixed_stdout_stderr/1,
+          fun interruption/1,
+          fun unknown_pod/1,
+          fun unknown_program/1]}}
    end}.
-
-%% TODO tests: unknown pod, unknown program
 
 stdout_only(PodName) ->
   Command = [<<"uname">>, <<"-s">>],
-  {ok, _} = k8s_exec:start_link(PodName, Command, #{}),
-  ?assertEqual([{stdout, <<"Linux\n">>}],
-               k8s_exec:receive_messages()).
+  {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
+  ?assertEqual({ok, [{stdout, <<"Linux\n">>}]},
+               k8s_exec:receive_messages(1000)),
+  ?assertNot(is_process_alive(Pid)).
 
 mixed_stdout_stderr(PodName) ->
   Command = [<<"sh">>, <<"-c">>, <<"echo foo; echo bar >&2; echo baz">>],
-  {ok, _} = k8s_exec:start_link(PodName, Command, #{}),
-  ?assertEqual([{stdout, <<"foo\nbaz\n">>},
-                {stderr, <<"bar\n">>}],
-               k8s_exec:receive_messages()).
+  {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
+  {ok, Messages} = k8s_exec:receive_messages(1000),
+  ?assertEqual([{stderr, <<"bar\n">>},
+                {stdout, <<"foo\nbaz\n">>}],
+               lists:sort(Messages)),
+  ?assertNot(is_process_alive(Pid)).
+
+interruption(PodName) ->
+  Command = [<<"sleep">>, <<"10">>],
+  {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
+  ?assertEqual({timeout, []}, k8s_exec:receive_messages(10)),
+  ?assert(is_process_alive(Pid)),
+  k8s_exec:stop(Pid),
+  ?assertNot(is_process_alive(Pid)).
+
+unknown_pod(_PodName) ->
+  %% TODO Check the status object (third value in the error tuple) once we add
+  %% support for exec response decoding.
+  Command = [<<"uname">>],
+  {error, {exec_error, 404, _}} =
+    k8s_exec:start(<<"does_not_exist">>, Command, #{}).
+
+unknown_program(PodName) ->
+  %% TODO Check the error object (second value in the error tuple) once we add
+  %% support for error parsing.
+  Command = [<<"does_not_exist">>],
+  {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
+  ?assertEqual({ok, [{error, _}]},
+               k8s_exec:receive_messages(1000)),
+  ?assertNot(is_process_alive(Pid)).
 
 create_pod(Name) ->
   Pod = #{kind => <<"Pod">>,

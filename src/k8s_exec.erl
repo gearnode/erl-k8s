@@ -4,8 +4,8 @@
 
 -behaviour(gen_server).
 
--export([start_link/2, start_link/3, stop/1,
-         receive_messages/0]).
+-export([start/2, start/3, start_link/2, start_link/3, stop/1,
+         receive_messages/1]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2, handle_info/2]).
 
 -export_type([pod_name/0, command/0,
@@ -39,38 +39,57 @@
                    command := command(),
                    websocket_client := pid()}.
 
+-spec start(pod_name(), command()) -> {ok, pid()} | {error, term()}.
+start(Pod, Command) ->
+  start(Pod, Command, #{}).
+
+-spec start(pod_name(), command(), options()) ->
+        {ok, pid()} | {error, term()}.
+start(Pod, Command, Options) ->
+  gen_server:start(?MODULE, [Pod, Command, options(Options)], []).
+
 -spec start_link(pod_name(), command()) -> {ok, pid()} | {error, term()}.
 start_link(Pod, Command) ->
   start_link(Pod, Command, #{}).
 
 -spec start_link(pod_name(), command(), options()) ->
         {ok, pid()} | {error, term()}.
-start_link(Pod, Command, Options0) ->
-  Options = case maps:is_key(event_target, Options0) of
-              true -> Options0;
-              false -> Options0#{event_target => self()}
-            end,
-  gen_server:start_link(?MODULE, [Pod, Command, Options], []).
+start_link(Pod, Command, Options) ->
+  gen_server:start_link(?MODULE, [Pod, Command, options(Options)], []).
+
+-spec options(options()) -> options().
+options(Options0) ->
+  case maps:is_key(event_target, Options0) of
+    true -> Options0;
+    false -> Options0#{event_target => self()}
+  end.
 
 -spec stop(ref()) -> ok.
 stop(Ref) ->
   gen_server:stop(Ref).
 
--spec receive_messages() ->
-        {ok, Messages} | {error, term(), Messages} when
+-spec receive_messages(non_neg_integer()) ->
+        {ok | timeout, Messages} | {error, term(), Messages} when
     Messages :: [message()].
-receive_messages() ->
-  receive_messages([]).
+receive_messages(Timeout) ->
+  Timer = erlang:send_after(Timeout, self(), timeout),
+  try
+    do_receive_messages([])
+  after
+    erlang:cancel_timer(Timer)
+  end.
 
--spec receive_messages(Messages) ->
-        {ok, Messages} | {error, term(), Messages} when
+-spec do_receive_messages(Messages) ->
+        {ok | timeout, Messages} | {error, term(), Messages} when
     Messages :: [message()].
-receive_messages(Messages) ->
+do_receive_messages(Messages) ->
   receive
+    timeout ->
+      {timeout, lists:reverse(Messages)};
     {k8s_exec, {message, Message}} ->
-      receive_messages([Message | Messages]);
+      do_receive_messages([Message | Messages]);
     {k8s_exec, terminated} ->
-      lists:reverse(Messages)
+      {ok, lists:reverse(Messages)}
   end.
 
 -spec init(list()) -> et_gen_server:init_ret(state()).
@@ -157,6 +176,7 @@ connect(Pod, Command, Options) ->
         {error, {no_upgrade, Response}} ->
           Status = mhttp_response:status(Response),
           ErrorString = mhttp_response:body(Response),
+          %% TODO Try to decode the response
           {error, {exec_error, Status, ErrorString}};
         {error, Reason} ->
           {error, Reason}
