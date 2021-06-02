@@ -54,11 +54,12 @@ interruption(PodName) ->
   ?assertNot(is_process_alive(Pid)).
 
 unknown_pod(_PodName) ->
-  %% TODO Check the status object (third value in the error tuple) once we add
-  %% support for exec response decoding.
   Command = [<<"uname">>],
-  ?assertMatch({error, {exec_error, 404, _}},
-                 k8s_exec:start(<<"does_not_exist">>, Command, #{})).
+  ?assertMatch({error, {exec_error, 404,
+                        #{details := #{kind := <<"pods">>,
+                                       name := <<"does_not_exist">>},
+                          reason := <<"NotFound">>}}},
+               k8s_exec:start(<<"does_not_exist">>, Command, #{})).
 
 unknown_program(PodName) ->
   %% TODO Check the error object (second value in the error tuple) once we add

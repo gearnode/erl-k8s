@@ -174,14 +174,32 @@ connect(Pod, Command, Options) ->
           {ok, Pid};
         {error, {no_upgrade, Response}} ->
           Status = mhttp_response:status(Response),
-          ErrorString = mhttp_response:body(Response),
-          %% TODO Try to decode the response
-          {error, {exec_error, Status, ErrorString}};
+          ErrorData = response_error_data(Response),
+          {error, {exec_error, Status, ErrorData}};
         {error, Reason} ->
           {error, Reason}
       end;
     {error, Reason} ->
       {error, Reason}
+  end.
+
+-spec response_error_data(mhttp:response()) ->
+        binary() | k8s_model:apimachinery_apis_meta_v1_status().
+response_error_data(Response) ->
+  Body = mhttp_response:body(Response),
+  case json:parse(Body) of
+    {ok, Value} ->
+      Definition = {ref, k8s, apimachinery_apis_meta_v1_status},
+      Options = #{null_member_handling => remove,
+                  disable_verification => true},
+      case jsv:validate(Value, Definition, Options) of
+        {ok, Status} ->
+          Status;
+        {error, _} ->
+          Body
+      end;
+    {error, _} ->
+      Body
   end.
 
 -spec uri(pod_name(), command(), options()) -> uri:uri().

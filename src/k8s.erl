@@ -14,4 +14,6 @@
                          {invalid_json_data, json:error()} |
                          {invalid_resource_data, [jsv:value_error()]}}
                       | {exec_error, mhttp:status(), binary()}
+                      | {exec_error, mhttp:status(),
+                         k8s_model:apimachinery_apis_meta_v1_status()}
                       | {invalid_exec_message, binary()}.
