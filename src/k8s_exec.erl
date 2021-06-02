@@ -100,7 +100,6 @@ init([Pod, Command, Options]) ->
                                    pod => Pod}),
   case connect(Pod, Command, Options) of
     {ok, Pid} ->
-      %% TODO link
       State = #{options => Options,
                 pod => Pod,
                 command => Command,
@@ -112,7 +111,6 @@ init([Pod, Command, Options]) ->
 
 -spec terminate(et_gen_server:terminate_reason(), state()) -> ok.
 terminate(_Reason, _State) ->
-  %% TODO stop the websocket process if it still exists
   ok.
 
 -spec handle_call(term(), {pid(), et_gen_server:request_id()}, state()) ->
@@ -172,6 +170,7 @@ connect(Pod, Command, Options) ->
       RequestOptions2 = RequestOptions#{pool => PoolId},
       case mhttp_websocket:connect(Request2, RequestOptions2) of
         {ok, Pid} ->
+          link(Pid),
           {ok, Pid};
         {error, {no_upgrade, Response}} ->
           Status = mhttp_response:status(Response),
