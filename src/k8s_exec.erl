@@ -131,7 +131,17 @@ connect(Pod, Command, Options) ->
   RequestOptions = #{},
   case k8s_http:request_and_pool(Request, RequestOptions) of
     {ok, {Request2, PoolId}} ->
-      mhttp_websocket:connect(Request2, RequestOptions#{pool => PoolId});
+      RequestOptions2 = RequestOptions#{pool => PoolId},
+      case mhttp_websocket:connect(Request2, RequestOptions2) of
+        {ok, Pid} ->
+          {ok, Pid};
+        {error, {no_upgrade, Response}} ->
+          Status = mhttp_response:status(Response),
+          ErrorString = mhttp_response:body(Response),
+          {error, {exec_error, Status, ErrorString}};
+        {error, Reason} ->
+          {error, Reason}
+      end;
     {error, Reason} ->
       {error, Reason}
   end.

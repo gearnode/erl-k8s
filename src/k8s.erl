@@ -13,4 +13,5 @@
                       | {invalid_response_body, mhttp:status(),
                          {invalid_json_data, json:error()} |
                          {invalid_resource_data, [jsv:value_error()]}}
+                      | {exec_error, mhttp:status(), binary()}
                       | {invalid_exec_message, binary()}.
