@@ -83,7 +83,7 @@ start_mhttp_pool(Id, Options) ->
     {ok, _} ->
       ok;
     {error, Reason} ->
-      throw({error, {mhttp_pool, Reason, Id}})
+      throw({error, {start_mhttp_pool, Reason, Id}})
   end.
 
 -spec stop_mhttp_pools(k8s_config:config()) -> ok.
