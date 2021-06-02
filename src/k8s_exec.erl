@@ -24,7 +24,13 @@
 -type message() ::
         {stdout, binary()}
       | {stderr, binary()}
-      | {error, binary()}.
+      | {error, error()}.
+
+-type error() ::
+        program_not_found
+      | {program_failure, ExitCode :: pos_integer()}
+      | {program_killed, Signal :: pos_integer()}
+      | binary().
 
 -type ref() :: et_gen_server:ref().
 
@@ -138,6 +144,10 @@ handle_info({websocket, {message, {data, _, Data}}}, State) ->
       %% The point of these empty messages is unknown; we skip them for the
       %% time being.
       {noreply, State};
+    {ok, {error, String}} ->
+      Error = parse_error_message(String),
+      send_event({message, {error, Error}}, State),
+      {noreply, State};
     {ok, Message} ->
       send_event({message, Message}, State),
       {noreply, State};
@@ -227,3 +237,47 @@ parse_message(<<3:8, Data/binary>>) ->
   {ok, {error, Data}};
 parse_message(Data) ->
   {error, {invalid_exec_message, Data}}.
+
+-spec parse_error_message(binary()) -> error().
+parse_error_message(String) ->
+  Funs = [fun parse_program_not_found_error_message/1,
+          fun parse_program_exit_error_message/1],
+  parse_error_message(String, Funs).
+
+-spec parse_error_message(binary(),
+                          [fun((binary()) -> {ok, error()} | error)]) ->
+        error().
+parse_error_message(String, []) ->
+  String;
+parse_error_message(String, [Fun | Funs]) ->
+  case Fun(String) of
+    {ok, Error} ->
+      Error;
+    error ->
+      parse_error_message(String, Funs)
+  end.
+
+-spec parse_program_not_found_error_message(binary()) -> {ok, error()} | error.
+parse_program_not_found_error_message(String) ->
+  case string:find(String, "executable file not found in \$PATH") of
+    nomatch ->
+      error;
+    _ ->
+      {ok, program_not_found}
+  end.
+
+-spec parse_program_exit_error_message(binary()) -> {ok, error()} | error.
+parse_program_exit_error_message(String) ->
+  RE = "exit code ([0-9]+)$",
+  case re:run(String, RE, [{capture, all_but_first, binary}]) of
+    {match, [CodeString]} ->
+      case binary_to_integer(CodeString) of
+        Code when Code > 128 ->
+          Signal = Code - 128,
+          {program_killed, Signal};
+        Code ->
+          {program_failure, Code}
+      ok;
+    nomatch ->
+      error
+  end.

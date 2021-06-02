@@ -62,29 +62,23 @@ unknown_pod(_PodName) ->
                k8s_exec:start(<<"does_not_exist">>, Command, #{})).
 
 unknown_program(PodName) ->
-  %% TODO Check the error object (second value in the error tuple) once we add
-  %% support for error parsing.
   Command = [<<"does_not_exist">>],
   {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
-  ?assertMatch({ok, [{error, _}]},
+  ?assertMatch({ok, [{error, program_not_found}]},
                k8s_exec:receive_messages(1000)),
   ?assertNot(is_process_alive(Pid)).
 
 program_failure(PodName) ->
-  %% TODO Check the error object (second value in the error tuple) once we add
-  %% support for error parsing.
   Command = [<<"sh">>, <<"-c">>, <<"exit 42">>],
   {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
-  ?assertMatch({ok, [{error, _}]},
+  ?assertMatch({ok, [{error, {program_failure, 42}}]},
                k8s_exec:receive_messages(1000)),
   ?assertNot(is_process_alive(Pid)).
 
 program_killed(PodName) ->
-  %% TODO Check the error object (second value in the error tuple) once we add
-  %% support for error parsing.
   Command = [<<"sh">>, <<"-c">>, <<"kill -9 0">>],
   {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
-  ?assertMatch({ok, [{error, _}]},
+  ?assertMatch({ok, [{error, {program_killed, 9}}]},
                k8s_exec:receive_messages(1000)),
   ?assertNot(is_process_alive(Pid)).
 
