@@ -15,7 +15,6 @@ exec_test_() ->
        delete_pod(PodName),
        error_logger:tty(false),
        ok = application:stop(k8s),
-       ok = application:stop(mhttp),
        error_logger:tty(true)
    end,
    fun (PodName) ->

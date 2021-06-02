@@ -11,7 +11,6 @@ resources_test_() ->
    fun (_) ->
        error_logger:tty(false),
        ok = application:stop(k8s),
-       ok = application:stop(mhttp),
        error_logger:tty(true)
    end,
    [fun basic_workflow/0]}.

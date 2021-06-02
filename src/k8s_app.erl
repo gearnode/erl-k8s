@@ -89,4 +89,4 @@ start_mhttp_pool(Id, Options) ->
 -spec stop_mhttp_pools(k8s_config:config()) -> ok.
 stop_mhttp_pools(Config) ->
   Ids = k8s_http:pool_ids(Config),
-  lists:foreach(fun mhttp_pool:stop/1, Ids).
+  lists:foreach(fun mhttp_pool_sup:stop_pool/1, Ids).
