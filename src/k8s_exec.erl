@@ -274,10 +274,10 @@ parse_program_exit_error_message(String) ->
       case binary_to_integer(CodeString) of
         Code when Code > 128 ->
           Signal = Code - 128,
-          {program_killed, Signal};
+          {ok, {program_killed, Signal}};
         Code ->
-          {program_failure, Code}
-      ok;
+          {ok, {program_failure, Code}}
+      end;
     nomatch ->
       error
   end.
