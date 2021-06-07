@@ -1,7 +1,7 @@
 -module(k8s_pods).
 
 -export([all_containers_started/1,
-         get/2, create/2, delete/2,
+         get/2, create/2, strategic_merge_patch/3, delete/2,
          options/1]).
 
 -export_type([pod/0]).
@@ -30,6 +30,11 @@ get(Name, Options) ->
 -spec create(pod(), k8s_resources:options()) -> k8s:result(pod()).
 create(Pod, Options) ->
   k8s_resources:create(core_v1_pod, Pod, options(Options)).
+
+-spec strategic_merge_patch(binary(), pod(), k8s_resources:options()) ->
+        k8s:result(pod()).
+strategic_merge_patch(Name, Pod, Options) ->
+  k8s_resources:strategic_merge_patch(core_v1_pod, Name, Pod, Options).
 
 -spec delete(binary(), k8s_resources:options()) -> k8s:result(pod()).
 delete(Name, Options) ->
