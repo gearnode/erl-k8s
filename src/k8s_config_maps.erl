@@ -13,8 +13,8 @@ get(Name, Options) ->
 
 -spec create(config_map(), k8s_resources:options()) ->
         k8s:result(config_map()).
-create(Config_Map, Options) ->
-  k8s_resources:create(core_v1_config_map, Config_Map, options(Options)).
+create(ConfigMap, Options) ->
+  k8s_resources:create(core_v1_config_map, ConfigMap, options(Options)).
 
 -spec delete(binary(), k8s_resources:options()) -> k8s:result(config_map()).
 delete(Name, Options) ->
