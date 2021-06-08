@@ -9,7 +9,7 @@
 -export([init/1, terminate/2, handle_call/3, handle_cast/2, handle_info/2]).
 
 -export_type([pod_name/0, command/0,
-              message/0, event_message/0, event/0,
+              event_message/0, event/0, message/0, error/0,
               ref/0, options/0]).
 
 -type pod_name() :: binary().
