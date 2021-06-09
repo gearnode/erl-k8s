@@ -5,7 +5,7 @@
 -behaviour(gen_server).
 
 -export([start/2, start/3, start_link/2, start_link/3, stop/1,
-         receive_messages/1]).
+         write_stdin/2, receive_messages/1]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2, handle_info/2]).
 
 -export_type([pod_name/0, command/0,
@@ -74,6 +74,10 @@ options(Options0) ->
 stop(Ref) ->
   gen_server:stop(Ref).
 
+-spec write_stdin(ref(), iodata()) -> ok | {error, term()}.
+write_stdin(Ref, Data) ->
+  gen_server:call(Ref, {write_stdin, Data}, infinity).
+
 -spec receive_messages(non_neg_integer()) ->
         {ok | timeout, Messages} | {error, term(), Messages} when
     Messages :: [message()].
@@ -121,6 +125,9 @@ terminate(_Reason, _State) ->
 
 -spec handle_call(term(), {pid(), et_gen_server:request_id()}, state()) ->
         et_gen_server:handle_call_ret(state()).
+handle_call({write_stdin, Data}, _From, State = #{websocket_client := Pid}) ->
+  Message = {data, binary, iolist_to_binary([0, Data])},
+  {reply, mhttp_websocket_client:send_message(Pid, Message), State};
 handle_call(Msg, From, State) ->
   ?LOG_WARNING("unhandled call ~p from ~p", [Msg, From]),
   {reply, unhandled, State}.
@@ -220,7 +227,8 @@ uri(Pod, Command, Options) ->
   BasePath = k8s_resources:path(core_v1_pod, Pod, ResourceOptions),
   Path = <<BasePath/binary, "/exec">>,
   Query1 = [{<<"stdout">>, <<"true">>},
-            {<<"stderr">>, <<"true">>}],
+            {<<"stderr">>, <<"true">>},
+            {<<"stdin">>, <<"true">>}],
   Query2 = case maps:find(container, Options) of
              {ok, Container} -> [{<<"container">>, Container}];
              error -> []

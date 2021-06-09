@@ -22,6 +22,7 @@ exec_test_() ->
         {with, PodName,
          [fun stdout_only/1,
           fun mixed_stdout_stderr/1,
+          fun stdin/1,
           fun interruption/1,
           fun unknown_pod/1,
           fun unknown_program/1,
@@ -43,6 +44,16 @@ mixed_stdout_stderr(PodName) ->
   ?assertEqual([{stderr, <<"bar\n">>},
                 {stdout, <<"foo\nbaz\n">>}],
                lists:sort(Messages)),
+  ?assertNot(is_process_alive(Pid)).
+
+stdin(PodName) ->
+  Command = [<<"wc">>, <<"-c">>],
+  {ok, Pid} = k8s_exec:start_link(PodName, Command, #{}),
+  ?assertEqual(ok, k8s_exec:write_stdin(Pid, <<"abc">>)),
+  ?assertEqual(ok, k8s_exec:write_stdin(Pid, <<"def">>)),
+  ?assertEqual(ok, k8s_exec:write_stdin(Pid, <<$\^d>>)),
+  ?assertEqual({ok, [{stdout, <<"YWJjZGVm\n">>}]},
+               k8s_exec:receive_messages(1000)),
   ?assertNot(is_process_alive(Pid)).
 
 interruption(PodName) ->
