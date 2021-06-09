@@ -109,7 +109,7 @@ init([Pod, Command, Options]) ->
       State = #{options => Options,
                 pod => Pod,
                 command => Command,
-                websocket_pid => Pid},
+                websocket_client => Pid},
       {ok, State};
     {error, Reason} ->
       {stop, Reason}
