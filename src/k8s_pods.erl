@@ -34,7 +34,8 @@ create(Pod, Options) ->
 -spec strategic_merge_patch(binary(), pod(), k8s_resources:options()) ->
         k8s:result(pod()).
 strategic_merge_patch(Name, Pod, Options) ->
-  k8s_resources:strategic_merge_patch(core_v1_pod, Name, Pod, Options).
+  k8s_resources:strategic_merge_patch(core_v1_pod, Name, Pod,
+                                      options(Options)).
 
 -spec delete(binary(), k8s_resources:options()) -> k8s:result(pod()).
 delete(Name, Options) ->
