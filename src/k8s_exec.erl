@@ -182,7 +182,7 @@ connect(Pod, Command, Options) ->
         {ok, Pid} ->
           link(Pid),
           {ok, Pid};
-        {error, {no_upgrade, Response}} ->
+        {error, {websocket, {no_upgrade, Response}}} ->
           Status = mhttp_response:status(Response),
           ErrorData = response_error_data(Response),
           {error, {exec_error, Status, ErrorData}};
