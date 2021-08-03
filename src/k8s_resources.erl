@@ -206,6 +206,8 @@ definition(batch_v1_job_list) ->
   #{path_name => <<"jobs">>,
     group => <<"batch">>,
     version => <<"v1">>};
+definition(core_v1_secret) ->
+  #{path_name => <<"secrets">>};
 definition(Id) ->
   error({unknown_resource, Id}).
 
