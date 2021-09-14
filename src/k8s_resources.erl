@@ -208,6 +208,10 @@ definition(batch_v1_job_list) ->
     version => <<"v1">>};
 definition(core_v1_secret) ->
   #{path_name => <<"secrets">>};
+definition(networking_v1_network_policy) ->
+  #{path_name => <<"networkpolicies">>,
+    group => <<"networking.k8s.io">>,
+    version => <<"v1">>};
 definition(Id) ->
   error({unknown_resource, Id}).
 
