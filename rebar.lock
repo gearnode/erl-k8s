@@ -28,7 +28,7 @@
   0},
  {<<"uri">>,
   {git,"https://github.com/galdor/erl-uri.git",
-       {ref,"aa029e922fa5ad08c0fa9f37968317916a0443b9"}},
+       {ref,"23f9fee391e81c82a668a3789f967455110e9dd1"}},
   0},
  {<<"uuid">>,
   {git,"https://github.com/galdor/erl-uuid.git",
@@ -36,5 +36,5 @@
   1},
  {<<"yaml">>,
   {git,"https://github.com/exograd/erl-yaml.git",
-       {ref,"64e1180e7d74d1516f845d5df6db3962252a7c97"}},
+       {ref,"a10b5791fd0709d26c67ea9b50d5882ccc621359"}},
   0}].
