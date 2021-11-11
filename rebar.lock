@@ -36,5 +36,5 @@
   1},
  {<<"yaml">>,
   {git,"https://github.com/exograd/erl-yaml.git",
-       {ref,"3d0c2fe245cdcc06abd2a0385a683b461969bd41"}},
+       {ref,"3ce842333b0cb631c3856bedd256e894f2e9df98"}},
   0}].
