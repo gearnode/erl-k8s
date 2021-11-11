@@ -1,4 +1,3 @@
-
 all: dialyzer test
 
 dialyzer:
