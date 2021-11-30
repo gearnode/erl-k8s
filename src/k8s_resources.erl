@@ -4,7 +4,8 @@
          strategic_merge_patch/4,
          decode_response_body/2,
          collection_path/2, path/3,
-         definition/1]).
+         definition/1,
+         add_options_query/3]).
 
 -export_type([id/0, definition/0, name/0, resource/0, options/0]).
 
@@ -21,6 +22,7 @@
 -type options() ::
         #{context => k8s_config:context_name(),
           namespace => binary(),
+          query => uri:query(),
           label_selector =>
             k8s_model:apimachinery_apis_meta_v1_label_selector(),
           field_manager => binary()}.
@@ -77,7 +79,8 @@ strategic_merge_patch(Id, Name, Resource, Options) ->
         k8s:result(resource()).
 send_request(Request0, Id, Options) ->
   Request = lists:foldl(fun (F, Req) -> F(Req, Options) end,
-                        Request0, [fun set_request_label_selector/2,
+                        Request0, [fun set_request_query/2,
+                                   fun set_request_label_selector/2,
                                    fun set_request_field_manager/2]),
   RequestOptions = maps:with([context], Options),
   case k8s_http:send_request(Request, RequestOptions) of
@@ -95,6 +98,13 @@ send_request(Request0, Id, Options) ->
     {error, Reason} ->
       {error, Reason}
   end.
+
+-spec set_request_query(mhttp:request(), options()) -> mhttp:request().
+set_request_query(Request, #{query := Query}) ->
+  Target = mhttp_request:target_uri(Request),
+  Request#{target => Target#{query => uri:query(Target) ++ Query}};
+set_request_query(Request, _) ->
+  Request.
 
 -spec set_request_label_selector(mhttp:request(), options()) ->
         mhttp:request().
@@ -245,4 +255,14 @@ delete_response_id(Id) ->
       Id;
     false ->
       apimachinery_apis_meta_v1_status
+  end.
+
+-spec add_options_query(options(), binary(), binary()) -> options().
+add_options_query(Options, Name, Value) ->
+  Parameter = {Name, Value},
+  case maps:find(query, Options) of
+    {ok, Query} ->
+      Options#{query => [Parameter | Query]};
+    error ->
+      Options#{query => [Parameter]}
   end.
