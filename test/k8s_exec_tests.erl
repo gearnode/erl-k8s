@@ -97,7 +97,7 @@ create_pod(Name) ->
   k8s_pods:create(Pod, #{}).
 
 delete_pod(Name) ->
-  k8s_pods:delete(Name, #{}).
+  k8s_pods:delete(Name, #{grace_period => 1}, #{}).
 
 wait_until_pod_is_started(Name) ->
   {ok, Pod} = k8s_pods:get(Name, #{}),
