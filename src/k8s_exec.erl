@@ -46,7 +46,7 @@
       | {program_killed, Signal :: pos_integer()}
       | binary().
 
--type ref() :: et_gen_server:ref().
+-type ref() :: c_gen_server:ref().
 
 -type options() ::
         #{event_target => pid() | atom(),
@@ -112,7 +112,7 @@ do_receive_messages(Messages) ->
       {ok, lists:reverse(Messages)}
   end.
 
--spec init(list()) -> et_gen_server:init_ret(state()).
+-spec init(list()) -> c_gen_server:init_ret(state()).
 init([Pod, Command, Options]) ->
   Namespace = maps:get(namespace, Options, <<"default">>),
   logger:update_process_metadata(#{domain => [k8s, exec],
@@ -129,22 +129,22 @@ init([Pod, Command, Options]) ->
       {stop, Reason}
   end.
 
--spec terminate(et_gen_server:terminate_reason(), state()) -> ok.
+-spec terminate(c_gen_server:terminate_reason(), state()) -> ok.
 terminate(_Reason, _State) ->
   ok.
 
--spec handle_call(term(), {pid(), et_gen_server:request_id()}, state()) ->
-        et_gen_server:handle_call_ret(state()).
+-spec handle_call(term(), {pid(), c_gen_server:request_id()}, state()) ->
+        c_gen_server:handle_call_ret(state()).
 handle_call(Msg, From, State) ->
   ?LOG_WARNING("unhandled call ~p from ~p", [Msg, From]),
   {reply, unhandled, State}.
 
--spec handle_cast(term(), state()) -> et_gen_server:handle_cast_ret(state()).
+-spec handle_cast(term(), state()) -> c_gen_server:handle_cast_ret(state()).
 handle_cast(Msg, State) ->
   ?LOG_WARNING("unhandled cast ~p", [Msg]),
   {noreply, State}.
 
--spec handle_info(term(), state()) -> et_gen_server:handle_info_ret(state()).
+-spec handle_info(term(), state()) -> c_gen_server:handle_info_ret(state()).
 handle_info({websocket, connected}, State) ->
   ?LOG_DEBUG("connection established"),
   {noreply, State};
