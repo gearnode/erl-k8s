@@ -21,7 +21,9 @@
 -export_type([options/0]).
 
 -type options() ::
-        #{field_manager => binary()}.
+        #{field_manager => binary(),
+          log_requests => boolean(),
+          request_hook => mhttp_client:request_hook()}.
 
 start(_StartType, _Args) ->
   try

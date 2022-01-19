@@ -91,14 +91,15 @@ pool_options(Config, Cluster, User) ->
                      k8s_config:user()) ->
         mhttp_client:options().
 client_options(_Config, Cluster, User) ->
+  K8sOptions = persistent_term:get(k8s_options),
   TLSOptions0 = [{verify, verify_peer}],
   TLSOptions1 = maps:fold(fun update_tls_options_from_cluster/3,
                           TLSOptions0, Cluster),
   TLSOptions2 = maps:fold(fun update_tls_options_from_user/3,
                           TLSOptions1, User),
-  #{tls_options => TLSOptions2,
-    compression => true,
-    log_requests => true}.
+  maps:merge(maps:with([log_requests, request_hook], K8sOptions),
+             #{tls_options => TLSOptions2,
+               compression => true}).
 
 -spec update_tls_options_from_cluster(atom(), any(), [Option]) ->
         [Option] when
