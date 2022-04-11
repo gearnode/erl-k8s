@@ -42,6 +42,8 @@
 
 -type error() ::
         program_not_found
+      | program_file_not_found
+      | program_not_executable
       | {program_failure, ExitCode :: pos_integer()}
       | {program_killed, Signal :: pos_integer()}
       | binary().
@@ -254,8 +256,11 @@ parse_message(Data) ->
 
 -spec parse_error_message(binary()) -> error().
 parse_error_message(String) ->
-  Funs = [fun parse_program_not_found_error_message/1,
-          fun parse_program_exit_error_message/1],
+  Funs =
+    [fun parse_program_not_found_error_message/1,
+     fun parse_program_file_not_found_error_message/1,
+     fun parse_program_not_executable_error_message/1,
+     fun parse_program_exit_error_message/1],
   parse_error_message(String, Funs).
 
 -spec parse_error_message(binary(),
@@ -278,6 +283,28 @@ parse_program_not_found_error_message(String) ->
       error;
     _ ->
       {ok, program_not_found}
+  end.
+
+-spec parse_program_file_not_found_error_message(binary()) ->
+        {ok, error()} | error.
+parse_program_file_not_found_error_message(String) ->
+  RE = "exec: [^:]+: stat [^:]+: no such file or directory: unknown$",
+  case re:run(String, RE) of
+    {match, _} ->
+      {ok, program_file_not_found};
+    nomatch ->
+      error
+  end.
+
+-spec parse_program_not_executable_error_message(binary()) ->
+        {ok, error()} | error.
+parse_program_not_executable_error_message(String) ->
+  RE = "exec: [^:]+: permission denied: unknown$",
+  case re:run(String, RE) of
+    {match, _} ->
+      {ok, program_not_executable};
+    nomatch ->
+      error
   end.
 
 -spec parse_program_exit_error_message(binary()) -> {ok, error()} | error.
