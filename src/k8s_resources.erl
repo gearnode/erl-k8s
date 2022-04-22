@@ -236,6 +236,10 @@ definition(networking_v1_network_policy) ->
   #{path_name => <<"networkpolicies">>,
     group => <<"networking.k8s.io">>,
     version => <<"v1">>};
+definition(io_k8s_metrics_pkg_apis_metrics_v1beta1_pod_metrics) ->
+  #{path_name => <<"pods">>,
+    group => <<"metrics.k8s.io">>,
+    version => <<"v1beta1">>};
 definition(Id) ->
   error({unknown_resource, Id}).
 
