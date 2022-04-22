@@ -1,8 +1,18 @@
 #!/bin/sh
 
+set -eu
+set -o pipefail
+
+# While the Kubernetes team publishes an OpenAPI v2 schema (see
+# api/openapi-spec/swagger.json in https://github.com/kubernetes/kubernetes),
+# this specification is incomplete; for example it does not contain
+# definitions for the metrics.k8s.io API.
+#
+# We instead fetch the generated OpenAPI schema from a runner Kubernetes
+# cluster.
+
 root=$(realpath $(dirname $0)/..)
 
-uri="https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json"
 output_path="$root/priv/kubernetes-openapi-specification.json"
 
-curl -sS -o $output_path $uri
+kubectl get --raw "/openapi/v2" | jq . > $output_path
