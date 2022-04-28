@@ -99,7 +99,7 @@ parse_memory(String) ->
   end.
 
 -spec parse_memory_value(binary(), integer()) ->
-        {ok, float()} | {error, error_reason()}.
+        {ok, integer()} | {error, error_reason()}.
 parse_memory_value(ValueString, Unit) ->
   try
     Value =
