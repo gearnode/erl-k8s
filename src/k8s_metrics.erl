@@ -26,7 +26,7 @@
           namespace => binary()}.
 
 -spec fetch_pod_metrics(binary(), options()) ->
-        k8s:result(pod_metrics).
+        k8s:result(pod_metrics()).
 fetch_pod_metrics(PodName, Options) ->
   k8s_resources:get(io_k8s_metrics_pkg_apis_metrics_v1beta1_pod_metrics,
                     PodName, options(Options)).
